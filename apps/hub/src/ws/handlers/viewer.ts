@@ -55,6 +55,14 @@ export function makeViewerHandlers(ctx: HubContext) {
 
     logger.info({ connId: conn.id, sessionId }, 'viewer joined');
 
+    // broadcast new viewer count to streamer + viewers
+    const peers = ctx.gateway.getViewersForSession(sessionId);
+    const streamers = ctx.gateway.getStreamers().filter((c) => c.sessionId === sessionId);
+    const count = peers.length;
+    for (const c of [...peers, ...streamers]) {
+      ctx.gateway.send(c.id, { type: 'viewer_count', count });
+    }
+
     // send lobby snapshot
     conn.ws.send(JSON.stringify({ type: 'joined', sessionId, session }));
 

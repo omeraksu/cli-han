@@ -60,11 +60,25 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
 
   let ptySession: PtySession | null = null;
   let viewerCount = 0;
+  let tipTotalSol = 0;
+  let chatUnread = 0;
+
+  function printStatus(): void {
+    const parts = [
+      `\x1b[36m[han]\x1b[0m`,
+      `\x1b[2m◉\x1b[0m \x1b[32mlive\x1b[0m`,
+      `◎ \x1b[1m${viewerCount}\x1b[0m viewer${viewerCount === 1 ? '' : 's'}`,
+      `🔥 \x1b[33m${tipTotalSol.toFixed(3)}\x1b[0m SOL`,
+      `💬 \x1b[2m${chatUnread} unread\x1b[0m`,
+    ];
+    process.stderr.write(`\r${parts.join('  ')}   `);
+  }
 
   // Step 6: Handle messages from hub
   ws.on('registered', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'registered' }>, 'type'>;
     console.error(`\n[han] Session ready. Share this code: ${p.code}\n`);
+    printStatus();
 
     // Step 4: Start PTY
     const shell = command ?? process.env['SHELL'] ?? '/bin/bash';
@@ -97,19 +111,20 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
   ws.on('viewer_count', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'viewer_count' }>, 'type'>;
     viewerCount = p.count;
-    process.stderr.write(`\r[han] viewers: ${viewerCount}  `);
+    printStatus();
   });
 
   ws.on('new_tip', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'new_tip' }>, 'type'>;
-    console.error(`\n[han] Tip received: ${p.amount} SOL from ${p.from}\n`);
+    tipTotalSol += p.amount;
+    process.stderr.write(`\n\x1b[33m🔥 +${p.amount} SOL from ${p.from.slice(0, 4)}...\x1b[0m\n`);
+    printStatus();
   });
 
   ws.on('chat_unread', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'chat_unread' }>, 'type'>;
-    if (p.count > 0) {
-      process.stderr.write(`\r[han] ${p.count} unread chat messages  `);
-    }
+    chatUnread = p.count;
+    printStatus();
   });
 
   // Step 7: Handle process shutdown

@@ -109,6 +109,14 @@ app.get('/ws', { websocket: true }, (socket, _req) => {
         });
         const fan = fanoutMap.get(sessionId);
         if (fan) fan.removeViewer(connId);
+
+        // broadcast new count to remaining viewers + streamer
+        const peers = gateway.getViewersForSession(sessionId).filter((c) => c.id !== connId);
+        const streamers = gateway.getStreamers().filter((c) => c.sessionId === sessionId);
+        const count = peers.length;
+        for (const c of [...peers, ...streamers]) {
+          gateway.send(c.id, { type: 'viewer_count', count });
+        }
       }
     }
     gateway.unregister(connId);
