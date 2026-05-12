@@ -28,11 +28,28 @@ program
   .description('Aktif yayinlari listele')
   .action(async () => {
     const { fetchLobby } = await import('./viewer/lobby.js');
+    const { startViewer } = await import('./viewer/index.js');
     const { render } = await import('ink');
     const { Lobby } = await import('./ui/Lobby.js');
     const React = await import('react');
     const sessions = await fetchLobby(HUB_URL);
-    render(React.default.createElement(Lobby, { sessions }));
+    const { waitUntilExit, unmount } = render(
+      React.default.createElement(Lobby, {
+        sessions,
+        interactive: true,
+        onSelect: (session: { id: string }) => {
+          unmount();
+          // jump directly into the picked session
+          startViewer({
+            hubUrl: HUB_URL,
+            sessionId: session.id,
+            walletAddress: WALLET,
+            handle: HANDLE,
+          });
+        },
+      }),
+    );
+    await waitUntilExit();
   });
 
 program

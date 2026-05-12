@@ -8,6 +8,48 @@ Han, AI ile çalışan geliştiriciler için terminal-native ambient social laye
 
 Hackathon: Solana Frontier Hackathon submission.
 
+## 5 dakikada yayın aç
+
+```bash
+# 1) Prerequisites (tek seferlik)
+brew install redis postgresql@14    # zaten varsa atla
+brew services start redis
+brew services start postgresql@14
+createdb han
+
+# 2) Han'ı klonla + kur
+git clone https://github.com/omeraksu/cli-han
+cd cli-han
+pnpm install
+pnpm -r build
+pnpm --filter @han/hub exec prisma migrate dev --name init
+
+# 3) Hub'ı başlat (Terminal 1)
+cd apps/hub && node -r dotenv/config dist/index.js
+# → "Hub listening on port 3000"
+
+# 4) Yayını aç (Terminal 2)
+cd /path/to/cli-han
+node apps/runtime/dist/index.js stream
+# İlk açılışta wizard: handle + bio seç → ENTER
+# PTY açılır, ne istersen yaz (claude code, cargo build, vs.)
+# Alt çubukta: [han] ◉ live ◎ N viewers 🔥 X SOL
+
+# 5) İzleyici (Terminal 3) — başka bir kullanıcı veya başka bir wallet
+cd /path/to/cli-han
+node apps/runtime/dist/index.js browse
+# ↑↓ ile yayın seç, ENTER ile bağlan
+# Split pane: sol stream, sağ chat
+# /raw    → ham terminal'i izle
+# /tip 0.005 → devnet'te %3 komisyonlu gerçek tip
+# /play   → Roulette mola oyunu
+# /profile → kendi profilin · /profile @alice → başkası
+# /settings → privacy + summarizer modu
+# /quit
+```
+
+İlk yayını 60 saniyede başlatabilir, gerçek devnet SOL ile tip kabul edebilirsin.
+
 ## Roadmap
 
 Han şu an **indie product** modunda, devnet odaklı V1 yolculuğu. Mainnet V2'ye ertelendi (kullanıcı kararı). Detay: ADR `2026-05-13-indie-product-pivot`.

@@ -9,6 +9,7 @@ import { RawStream } from '../ui/RawStream.js';
 import { GamesHub, type GameId } from '../ui/GamesHub.js';
 import { Roulette } from '../ui/Roulette.js';
 import { TipDialog, type TipState } from '../ui/TipDialog.js';
+import { ProfileScreen, type HanProfile, type ProfileView } from '../ui/Profile.js';
 import { colors } from '../ui/colors.js';
 import type { WsClient } from '../transport/ws-client.js';
 import { useStream } from './hooks/useStream.js';
@@ -25,7 +26,21 @@ interface AppProps {
 }
 
 type StreamMode = 'feed' | 'raw';
-type Overlay = null | 'games-hub' | 'roulette' | 'tip';
+type Overlay = null | 'games-hub' | 'roulette' | 'tip' | 'profile';
+
+interface ProfileOverlayState {
+  view: ProfileView;
+  profile: HanProfile;
+}
+
+const MOCK_STATS = {
+  streamsHosted: 2,
+  hoursStreamed: 3,
+  tipsReceivedUsdc: 1.2,
+  gamesPlayed: 5,
+  gamesWon: 2,
+  potEarnedUsdc: 0.4,
+};
 
 interface TipOverlayState {
   amount: number;
@@ -51,6 +66,7 @@ export function App({
     amount: DEFAULT_TIP_SOL,
     status: 'confirm',
   });
+  const [profileOverlay, setProfileOverlay] = useState<ProfileOverlayState | null>(null);
   const { feedItems, rawLines } = useStream(client);
   const { messages, send } = useChat(client);
   const metrics = useViewerMetrics(client);
@@ -139,6 +155,50 @@ export function App({
           }
           return;
         }
+        if (cmd === 'profile') {
+          const target = parts[1]?.replace(/^@/, '');
+          if (!target || target.toLowerCase() === 'me') {
+            // self view — viewer's own keypair if known, otherwise placeholder
+            const pubkey = viewerWallet ?? sessionCode;
+            setProfileOverlay({
+              view: 'view-self',
+              profile: {
+                pubkey,
+                handle: 'me',
+                bio: 'builder · ai × web3 · kozalak hub',
+                memberSince: new Date().toISOString().slice(0, 10),
+                stats: MOCK_STATS,
+              },
+            });
+          } else {
+            // other view — placeholder until hub /profile/:handle lands
+            setProfileOverlay({
+              view: 'view-other',
+              profile: {
+                pubkey: streamerWallet ?? target,
+                handle: target,
+                bio: streamerName === target ? 'live now on han' : 'han member',
+                isLive: streamerName === target,
+                liveDuration: streamerName === target ? '1m' : undefined,
+                viewerCount: streamerName === target ? metrics.viewerCount : 0,
+                stats: MOCK_STATS,
+              },
+            });
+          }
+          setOverlay('profile');
+          return;
+        }
+        if (cmd === 'settings') {
+          setProfileOverlay({
+            view: 'settings',
+            profile: {
+              pubkey: viewerWallet ?? sessionCode,
+              handle: 'me',
+            },
+          });
+          setOverlay('profile');
+          return;
+        }
         if (cmd === 'quit') {
           client.close();
           exit();
@@ -178,6 +238,36 @@ export function App({
             setOverlay('tip');
           }}
           onQuit={() => setOverlay('games-hub')}
+        />
+      );
+    }
+    if (overlay === 'profile' && profileOverlay) {
+      return (
+        <ProfileScreen
+          view={profileOverlay.view}
+          profile={profileOverlay.profile}
+          focused
+          onBack={() => {
+            setOverlay(null);
+            setProfileOverlay(null);
+          }}
+          onEdit={() =>
+            setProfileOverlay((p) => (p ? { ...p, view: 'edit' } : p))
+          }
+          onSettings={() =>
+            setProfileOverlay((p) => (p ? { ...p, view: 'settings' } : p))
+          }
+          onSubmitEdit={(next) =>
+            setProfileOverlay((p) => (p ? { view: 'view-self', profile: next } : p))
+          }
+          onTip={() => {
+            setTip({ amount: DEFAULT_TIP_SOL, status: 'confirm' });
+            setOverlay('tip');
+          }}
+          onWatchStream={() => {
+            setOverlay(null);
+            setProfileOverlay(null);
+          }}
         />
       );
     }
@@ -222,7 +312,7 @@ export function App({
       />
       <Footer>
         <Box justifyContent="space-between">
-          <Text color={colors.dim}>/raw   /play   /tip   /quit</Text>
+          <Text color={colors.dim}>/raw  /play  /tip  /profile  /quit</Text>
           <Box>
             <Text color={colors.dim}>{metrics.viewerCount} viewers</Text>
             <Text color={colors.dim}>{'  ·  '}</Text>

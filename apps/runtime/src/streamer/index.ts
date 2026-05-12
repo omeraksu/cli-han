@@ -1,6 +1,10 @@
+import React from 'react';
+import { render } from 'ink';
 import { WsClient } from '../transport/ws-client.js';
 import { applyPrivacyFilter } from './privacy-filter.js';
 import { PtySession } from './pty.js';
+import { loadProfile, saveProfile } from './profile-store.js';
+import { SetupWizard } from './SetupWizard.js';
 import type {
   CreateSessionRequest,
   CreateSessionResponse,
@@ -22,9 +26,55 @@ function detectTool(command: string | undefined): string {
   return head.toLowerCase();
 }
 
+async function runFirstTimeSetup(
+  pubkey: string,
+): Promise<{ handle: string; bio?: string } | null> {
+  return new Promise((resolve) => {
+    let result: { handle: string; bio?: string } | null = null;
+    const { waitUntilExit, unmount } = render(
+      React.createElement(SetupWizard, {
+        pubkey,
+        onComplete: (profile) => {
+          result = profile;
+          unmount();
+        },
+        onCancel: () => {
+          result = null;
+          unmount();
+        },
+      }),
+      { exitOnCtrlC: false },
+    );
+    waitUntilExit().then(() => resolve(result));
+  });
+}
+
 export async function startStreamer(opts: StreamerOptions): Promise<void> {
-  const { hubUrl, walletAddress, command, streamerName, description } = opts;
+  const { hubUrl, walletAddress, command } = opts;
+  let streamerName = opts.streamerName;
+  let description = opts.description;
   const tool = detectTool(command);
+
+  // First-time setup wizard: only runs if no ~/.han/profile.json yet.
+  const existingProfile = loadProfile();
+  if (!existingProfile) {
+    const result = await runFirstTimeSetup(walletAddress);
+    if (!result) {
+      console.error('[han] setup cancelled.');
+      process.exit(0);
+    }
+    saveProfile({
+      handle: result.handle,
+      bio: result.bio,
+      createdAt: new Date().toISOString(),
+    });
+    streamerName = streamerName ?? result.handle;
+    description = description ?? result.bio;
+    console.error(`[han] profile saved · welcome @${result.handle}`);
+  } else {
+    streamerName = streamerName ?? existingProfile.handle;
+    description = description ?? existingProfile.bio;
+  }
 
   // Step 1: POST /sessions to get sessionId
   let sessionId: string;
