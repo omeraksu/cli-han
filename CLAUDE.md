@@ -2,7 +2,7 @@
 
 Terminal-native ambient social layer for AI-assisted developers. Yayıncı kendi tool'unu (Claude Code, Cursor, Codex CLI, Aider) çalıştırır, terminal output'u Han hub'a stream olur. İzleyiciler ham akışı veya AI özetli broadcast feed'i takip eder, kendi aralarında mini-game oynar, yayıncıya tip atar. Kazanan attestation Solana'ya yazılır.
 
-Solana Frontier Hackathon submission. Devnet odaklı, mainnet hedefli.
+**Indie product**, solo geliştirici, gelir hedefli. **Devnet** odaklı V1; mainnet V2 sonrası (kullanıcı kararı). Birincil V1 gelir: **tip komisyonu %3**. Hackathon submission'ı (12 May 2026) artık başlangıç noktası, gönderim değil. Detay: ADR `2026-05-13-indie-product-pivot`.
 
 ## Hızlı yön
 
@@ -87,9 +87,11 @@ Sabitler:
 ## Solana karar referansları
 
 - ADR 2026-05-05-sas-vs-custom-pda: Attestation SAS üstünden, custom Anchor kapsam dışı
-- ADR 2026-05-05-refund-timeout: 24 saat timeout sonrası trustless refund, V1 zorunlu
+- ADR 2026-05-05-refund-timeout: 24 saat timeout sonrası trustless refund, V1.5 zorunlu (V1'de game engine yok)
 - ADR 2026-05-05-rpc-fallback: Multi-endpoint failover, Helius backup
-- ADR 2026-05-12-game-decoupled-ui: Game UI V1'de Roulette mockup, engine V2'de
+- ADR 2026-05-12-game-decoupled-ui: Game UI V1'de Roulette mockup, engine V1.5'te (önceki "V2" Revision 2'de V1.5'e taşındı)
+- ADR 2026-05-13-indie-product-pivot: Hackathon submission → solo indie ürün, devnet odaklı V1, tip %3 V1 gelir
+- ADR 2026-05-13-tip-fee-architecture: %3 fee program-less, iki SystemProgram::transfer tek TX
 
 ## Geliştirme akışı
 
@@ -145,7 +147,20 @@ Han'da hiçbir adım commit'siz bırakılmaz. Format kuralları `han-conventions
 
 Skill çağırma router'da listelenen trigger phrase'leri ile otomatik. İsim verme zorunlu değil.
 
-## Hackathon teslim haftası
+## V1 sprint planı (indie product, devnet)
+
+Detay: `.claude/plans/neden-commit-yok-commit-prancy-crab.md`. 4 sprint × 1 hafta:
+
+| Sprint | Hedef |
+|---|---|
+| 1 — Hub canlı | Redis + Postgres lokal, e2e raw stream + chat |
+| 2 — Tip + Streamer overlay | Devnet'te %3 komisyonlu tip, yayıncı UI |
+| 3 — Profile + Onboarding | 5 Profile ekranı, first-time wizard, lobby polish |
+| 4 — Polish + ilk demo | Bug fix, dokümantasyon, beta tester davet, demo video |
+
+Mainnet V2'ye taşındı (kullanıcı kararı). Pong + Type Race V1.5'e (önceden V2 idi, indie pivot'ta öne çekildi).
+
+## Hackathon teslim haftası (artık aktif değil — history)
 
 ```bash
 /prep-demo

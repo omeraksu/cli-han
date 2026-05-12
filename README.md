@@ -8,6 +8,18 @@ Han, AI ile çalışan geliştiriciler için terminal-native ambient social laye
 
 Hackathon: Solana Frontier Hackathon submission.
 
+## Roadmap
+
+Han şu an **indie product** modunda, devnet odaklı V1 yolculuğu. Mainnet V2'ye ertelendi (kullanıcı kararı). Detay: ADR `2026-05-13-indie-product-pivot`.
+
+| Versiyon | Kapsam | Cluster |
+|---|---|---|
+| **V1** (4 hafta) | Hub canlı + viewer split pane + tip komisyonu %3 + Profile + onboarding | devnet |
+| **V1.5** | Pong + Type Race engine + on-chain stake + SAS attestation + summarizer AI | devnet |
+| **V2** | Premium abonelik $9/ay + mainnet deploy + web companion app | mainnet |
+
+V1 birincil gelir: tip komisyonu %3 (program-less, iki SystemProgram::transfer tek TX). Detay: ADR `2026-05-13-tip-fee-architecture`.
+
 ## Live deployment
 
 | | Devnet |

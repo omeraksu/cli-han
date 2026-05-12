@@ -92,3 +92,25 @@ Games sayfası (`24:2`) tam taranınca durum değişti: Figma sadece Solo Roulet
 | `apps/runtime/src/ui/GamesHub.tsx` | Yeni — 3 kart, klavye nav (1-3 select, Q back) |
 | `apps/runtime/src/viewer/App.tsx` | `/play` slash command → GamesHub mount |
 | `figma-spec.md` | Games sayfası bölümü detaylı eklendi |
+
+---
+
+## Revision 2 — 2026-05-13 (indie product pivot)
+
+Hackathon kapandı, Han indie ürünleştirme yoluna girdi (ADR `2026-05-13-indie-product-pivot`). Pong + Type Race bu pivotta **V1.1'den V1.5'e** taşındı.
+
+Gerekçe:
+- V1 indie launch'ta tek gelir kaynağı tip komisyonu %3, on-chain stake'li oyunlara dayanmıyor
+- 4-haftalık Sprint 1-4 mainnet hedefli (devnet'te kalsa bile aynı zaman). Pong + Type Race engine + on-chain stake + SAS attestation 2+ hafta ek iş; V1 önce hub+tip+onboarding'i poliş etmeli
+- Pong + Type Race **demo değerli ama monetizasyon değerli değil** ilk 100 kullanıcıya kadar. Tournament mode (V1.5 sonu) ile birlikte gelmeleri daha doğal
+
+**Revize edilmiş zaman planı**:
+
+| Versiyon | Kapsam | Tarih hedefi |
+|---|---|---|
+| V1 (devnet) | Hub canlı + tip %3 + profile + onboarding | 4 hafta |
+| V1.1 | Bug fix + ilk beta feedback | 6 hafta |
+| V1.5 | Pong + Type Race engine + SAS attestation + Summarizer AI | 3 ay |
+| V2 | Premium abonelik + mainnet (kullanıcıya bağlı) | 6 ay |
+
+Anchor program (`programs/han/`) zaten yazılı ve devnet'e deploy edilmiş durumda kalır — V1.5'te runtime'a bağlanır. Compile-only durumu V1 süresince devam eder.
