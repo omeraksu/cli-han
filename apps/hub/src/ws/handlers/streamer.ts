@@ -13,10 +13,50 @@ const registerStreamerSchema = z.object({
   tool: z.string().min(1).max(32).optional(),
 });
 
-const streamChunkSchema = z.object({
-  data: z.string(),
-  ts: z.number(),
-});
+// stream_chunk historically carried only PTY stdout. With the MCP
+// transport (ADR 2026-05-13-mcp-server-architecture) it also carries
+// semantic events. Either payload shape is accepted: a bare `data`
+// string (legacy PTY) or an `event` object with a discriminated `type`.
+const semanticEventSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('stdout'),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal('command_start'),
+    command: z.string(),
+  }),
+  z.object({
+    type: z.literal('command_end'),
+    exitCode: z.number().int().optional(),
+  }),
+  z.object({
+    type: z.literal('turn'),
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+  }),
+  z.object({
+    type: z.literal('tool_call'),
+    name: z.string(),
+    argsSummary: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('file_edit'),
+    path: z.string(),
+    diffSummary: z.string().optional(),
+  }),
+]);
+
+const streamChunkSchema = z.union([
+  z.object({
+    data: z.string(),
+    ts: z.number(),
+  }),
+  z.object({
+    event: semanticEventSchema,
+    ts: z.number(),
+  }),
+]);
 
 export function makeStreamerHandlers(ctx: HubContext) {
   async function handleRegisterStreamer(conn: Connection, payload: unknown): Promise<void> {
@@ -69,7 +109,6 @@ export function makeStreamerHandlers(ctx: HubContext) {
       conn.ws.send(JSON.stringify({ type: 'error', message: 'invalid stream_chunk payload' }));
       return;
     }
-    const { data, ts } = parsed.data;
 
     const sessionId = conn.sessionId;
     if (!sessionId) {
@@ -77,7 +116,11 @@ export function makeStreamerHandlers(ctx: HubContext) {
       return;
     }
 
-    const event = { v: 1, type: 'stdout' as const, ts, data };
+    const { ts } = parsed.data;
+    const event =
+      'data' in parsed.data
+        ? ({ v: 1 as const, type: 'stdout' as const, ts, data: parsed.data.data })
+        : ({ v: 1 as const, ts, ...parsed.data.event });
 
     const cache = ctx.cache.get(sessionId);
     if (cache) cache.push(event);

@@ -69,3 +69,29 @@ export interface FeedItem {
   current_focus: string;
   mood: string;
 }
+
+export type SemanticEvent =
+  | { v: 1; type: 'stdout'; ts: number; data: string }
+  | { v: 1; type: 'command_start'; ts: number; command: string }
+  | { v: 1; type: 'command_end'; ts: number; exitCode?: number }
+  | {
+      v: 1;
+      type: 'turn';
+      ts: number;
+      role: 'user' | 'assistant';
+      content: string;
+    }
+  | {
+      v: 1;
+      type: 'tool_call';
+      ts: number;
+      name: string;
+      argsSummary?: string;
+    }
+  | {
+      v: 1;
+      type: 'file_edit';
+      ts: number;
+      path: string;
+      diffSummary?: string;
+    };

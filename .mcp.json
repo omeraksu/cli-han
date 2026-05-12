@@ -1,5 +1,14 @@
 {
   "mcpServers": {
+    "han": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./packages/mcp-server/dist/index.js"],
+      "env": {
+        "HAN_HUB_URL": "http://localhost:3000"
+      },
+      "description": "Han streaming + social tools. han_stream_start / han_log / han_browse / han_connect / han_tip. .env'den WALLET_ADDRESS + FEE_COLLECTOR_PUBKEY okur."
+    },
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp",

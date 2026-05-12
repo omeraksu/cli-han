@@ -7,7 +7,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "setup:env": "cp .env.example .env && ln -sf ../../.env apps/hub/.env && ln -sf ../../.env apps/runtime/.env && chmod 644 .env && echo '.env created (edit it with your devnet keys) + symlinked to apps/hub and apps/runtime'",
+    "setup:env": "cp -n .env.example .env || true; ln -sf ../../.env apps/hub/.env && ln -sf ../../.env apps/runtime/.env && ln -sf ../../.env packages/mcp-server/.env && chmod 644 .env && echo '.env ready + symlinked to apps/hub, apps/runtime, packages/mcp-server'",
     "hub": "pnpm --filter @han/hub exec node -r dotenv/config dist/index.js",
     "stream": "pnpm --filter @han/runtime exec node dist/index.js stream",
     "browse": "pnpm --filter @han/runtime exec node dist/index.js browse",

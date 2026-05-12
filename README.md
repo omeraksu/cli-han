@@ -58,6 +58,41 @@ pnpm browse
 
 İlk yayını 60 saniyede başlatabilir, gerçek devnet SOL ile tip kabul edebilirsin.
 
+## Claude Code MCP — "han'da yayın aç" diyebilmek
+
+Han'ı bir MCP server olarak Claude Code (veya Cursor/Aider) içinde kullanabilirsin. AI doğal dilden tetikler: yayın açar, her turn'de log atar, başkalarını izler, tip atar.
+
+Detay: `.claude/docs/mcp-setup.md`. Kısaca:
+
+```jsonc
+// .mcp.json
+{
+  "mcpServers": {
+    "han": {
+      "command": "node",
+      "args": ["/absolute/path/to/cli-han/packages/mcp-server/dist/index.js"],
+      "env": {
+        "HAN_HUB_URL": "http://localhost:3000",
+        "WALLET_ADDRESS": "<senin pubkey>",
+        "FEE_COLLECTOR_PUBKEY": "<fee collector pubkey>"
+      }
+    }
+  }
+}
+```
+
+Claude Code yeniden başlat → `/mcp` ile `han` server + 6 tool listelenir.
+
+```
+[user] han'da yayın aç
+[claude] ✓ live · session 9mdv.xxxx
+[user] runtime bug'ı bul
+[claude] (han_log her turn ve tool call'da çağrılır, viewer broadcast feed'inde
+         ⟁ intent · ▸ tool_call · ▸ file_edit canlı görünür)
+```
+
+İzleyici tarafı yine `pnpm browse` ile aynı terminal CLI.
+
 ## Roadmap
 
 Han şu an **indie product** modunda, devnet odaklı V1 yolculuğu. Mainnet V2'ye ertelendi (kullanıcı kararı). Detay: ADR `2026-05-13-indie-product-pivot`.

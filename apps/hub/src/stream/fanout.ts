@@ -31,9 +31,23 @@ export class StreamFanout {
   }
 
   broadcast(event: StreamEvent): void {
-    const msg = JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts });
+    // PTY stdout fans out as `raw_chunk` to raw-mode viewers; semantic
+    // events (turn / tool_call / file_edit / command_*) fan out as
+    // `semantic_event` to everyone, since both feed-mode and raw-mode
+    // viewers benefit from them.
+    if (event.type === 'stdout') {
+      const msg = JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts });
+      for (const [, entry] of this.viewers) {
+        if (entry.mode === 'raw' && entry.ws.readyState === 1) {
+          entry.ws.send(msg);
+        }
+      }
+      return;
+    }
+
+    const msg = JSON.stringify({ type: 'semantic_event', event });
     for (const [, entry] of this.viewers) {
-      if (entry.mode === 'raw' && entry.ws.readyState === 1 /* OPEN */) {
+      if (entry.ws.readyState === 1) {
         entry.ws.send(msg);
       }
     }

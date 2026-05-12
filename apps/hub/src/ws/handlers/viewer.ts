@@ -71,7 +71,13 @@ export function makeViewerHandlers(ctx: HubContext) {
     const cache = ctx.cache.get(sessionId);
     if (cache) {
       for (const event of cache.getRecent()) {
-        conn.ws.send(JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts }));
+        if (event.type === 'stdout') {
+          conn.ws.send(
+            JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts }),
+          );
+        } else {
+          conn.ws.send(JSON.stringify({ type: 'semantic_event', event }));
+        }
       }
     }
 

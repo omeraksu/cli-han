@@ -77,7 +77,7 @@ export function App({
     status: 'confirm',
   });
   const [profileOverlay, setProfileOverlay] = useState<ProfileOverlayState | null>(null);
-  const { feedItems, rawLines } = useStream(client);
+  const { feedItems, rawLines, semantic } = useStream(client);
   const { messages, send } = useChat(client);
   const metrics = useViewerMetrics(client);
 
@@ -313,7 +313,12 @@ export function App({
       <SplitPane
         left={
           mode === 'feed' ? (
-            <BroadcastFeed items={feedItems} maxItems={6} streamerName={streamerName} />
+            <BroadcastFeed
+              items={feedItems}
+              semantic={semantic}
+              maxItems={6}
+              streamerName={streamerName}
+            />
           ) : (
             <RawStream lines={rawLines} maxLines={32} />
           )
