@@ -18,28 +18,25 @@ function resolveShell(prefer?: string): string {
 }
 
 function buildEnv(): Record<string, string> {
-  // PNPM_* and npm_* tend to bloat the env on `pnpm exec`, and a couple
-  // of them carry shell-evaluated values that confuse posix_spawnp on
-  // macOS. Keep the essentials, drop the noise.
-  const allow = new Set([
-    'PATH',
-    'HOME',
-    'USER',
-    'LOGNAME',
-    'SHELL',
-    'LANG',
-    'LC_ALL',
-    'LC_CTYPE',
-    'TERM',
-    'TMPDIR',
-    'TZ',
-    'SSH_AUTH_SOCK',
-    'EDITOR',
+  // Forward almost everything (so tools like Claude Code, git, helix
+  // inherit their real config) and drop only the few prefixes that
+  // either confuse posix_spawnp under `pnpm exec` or leak Han internals
+  // into the child shell.
+  const dropExact = new Set([
+    'NODE_OPTIONS',
+    'NODE_REPL_HISTORY',
+    'PNPM_HOME',
+    'PNPM_PACKAGE_NAME',
+    'PNPM_SCRIPT_SRC_DIR',
   ]);
+  const dropPrefix = ['PNPM_', 'NPM_', 'npm_', 'BERRY_'];
+
   const env: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
     if (typeof v !== 'string') continue;
-    if (allow.has(k)) env[k] = v;
+    if (dropExact.has(k)) continue;
+    if (dropPrefix.some((p) => k.startsWith(p))) continue;
+    env[k] = v;
   }
   // Hard-code TERM if missing so colour output and resize work cleanly.
   env['TERM'] ??= 'xterm-256color';

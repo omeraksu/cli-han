@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text, useApp } from 'ink';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { loadLocalKeypair, sendTipWithFee } from '@han/sdk';
@@ -60,7 +60,17 @@ export function App({
   viewerWallet,
 }: AppProps): JSX.Element {
   const { exit } = useApp();
-  const [mode, setMode] = useState<StreamMode>('feed');
+  // V1 default: raw. Summarizer (broadcast feed) ships in V1.5; until
+  // it does, `feed` is always empty. Users can flip back via /feed.
+  const [mode, setMode] = useState<StreamMode>('raw');
+
+  // Tell the hub our initial mode so the fanout adds us to the raw bucket.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      client.send({ type: 'switch_mode', mode: 'raw' });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [client]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [tip, setTip] = useState<TipOverlayState>({
     amount: DEFAULT_TIP_SOL,
