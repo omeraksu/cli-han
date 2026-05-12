@@ -21,6 +21,13 @@ createdb han
 git clone https://github.com/omeraksu/cli-han
 cd cli-han
 pnpm install
+pnpm setup:env       # .env'i .env.example'dan kopyala + symlink kur
+# .env'i editöründe aç ve doldur:
+#   WALLET_ADDRESS=<senin solana pubkey>
+#   FEE_COLLECTOR_PUBKEY=<fee collector wallet, devnet için kendine yarat>
+#   SOLANA_RPC_URL=https://api.devnet.solana.com
+#   DATABASE_URL=postgresql://<senin macos user>@localhost:5432/han
+#   REDIS_URL=redis://localhost:6379
 pnpm -r build
 pnpm --filter @han/hub exec prisma migrate dev --name init
 
