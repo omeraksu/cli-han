@@ -8,6 +8,9 @@ import { logger } from '../../logger.js';
 const registerStreamerSchema = z.object({
   sessionId: z.string().min(1),
   walletAddress: z.string().min(1),
+  streamerName: z.string().min(1).max(32).optional(),
+  description: z.string().min(1).max(120).optional(),
+  tool: z.string().min(1).max(32).optional(),
 });
 
 const streamChunkSchema = z.object({
@@ -22,13 +25,12 @@ export function makeStreamerHandlers(ctx: HubContext) {
       conn.ws.send(JSON.stringify({ type: 'error', message: 'invalid register_streamer payload' }));
       return;
     }
-    const { sessionId, walletAddress } = parsed.data;
+    const { sessionId, walletAddress, streamerName, description, tool } = parsed.data;
 
     conn.type = 'streamer';
     conn.sessionId = sessionId;
     ctx.gateway.register(conn);
 
-    // init cache + fanout for session if needed
     if (!ctx.cache.has(sessionId)) {
       ctx.cache.set(sessionId, new StreamCache());
     }
@@ -36,17 +38,23 @@ export function makeStreamerHandlers(ctx: HubContext) {
       ctx.fanout.set(sessionId, new StreamFanout());
     }
 
-    // add to lobby
+    // POST /sessions may have already added the session; if so, keep its
+    // metadata and only patch in any fresher fields from the WS payload.
+    const existing = await ctx.lobby.getSession(sessionId);
     await ctx.lobby.addSession({
       id: sessionId,
       streamerWallet: walletAddress,
-      code: sessionId,
-      viewerCount: 0,
-      startedAt: Date.now(),
+      code: existing?.code ?? sessionId,
+      viewerCount: existing?.viewerCount ?? 0,
+      startedAt: existing?.startedAt ?? Date.now(),
+      streamerName: streamerName ?? existing?.streamerName,
+      description: description ?? existing?.description,
+      tool: tool ?? existing?.tool,
+      tipSol: existing?.tipSol ?? 0,
     });
 
-    logger.info({ sessionId, walletAddress }, 'streamer registered');
-    conn.ws.send(JSON.stringify({ type: 'registered', sessionId }));
+    logger.info({ sessionId, walletAddress, tool }, 'streamer registered');
+    conn.ws.send(JSON.stringify({ type: 'registered', sessionId, code: sessionId }));
 
     // notify existing viewers that session is live
     const viewers = ctx.gateway.getViewersForSession(sessionId);

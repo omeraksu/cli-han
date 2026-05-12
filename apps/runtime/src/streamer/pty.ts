@@ -15,12 +15,20 @@ export class PtySession {
   constructor(opts: PtyOptions) {
     const shell = opts.shell ?? process.env['SHELL'] ?? '/bin/bash';
 
+    // node-pty cannot handle undefined env values — strip them out so
+    // posix_spawnp doesn't choke on partially populated environments
+    // (common when the streamer is launched from a non-TTY parent).
+    const env: Record<string, string> = {};
+    for (const [k, v] of Object.entries(process.env)) {
+      if (typeof v === 'string') env[k] = v;
+    }
+
     this.proc = pty.spawn(shell, [], {
       name: 'xterm-256color',
       cols: process.stdout.columns ?? 80,
       rows: process.stdout.rows ?? 24,
       cwd: process.cwd(),
-      env: process.env as Record<string, string>,
+      env,
     });
 
     this.proc.onData((data: string) => {

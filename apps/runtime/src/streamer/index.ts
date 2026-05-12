@@ -1,24 +1,44 @@
 import { WsClient } from '../transport/ws-client.js';
 import { applyPrivacyFilter } from './privacy-filter.js';
 import { PtySession } from './pty.js';
-import type { HubToStreamer, StreamerToHub } from '../transport/protocol.js';
+import type {
+  CreateSessionRequest,
+  CreateSessionResponse,
+  HubToStreamer,
+  StreamerToHub,
+} from '../transport/protocol.js';
 
 export interface StreamerOptions {
   hubUrl: string;
   walletAddress: string;
   command?: string;
+  streamerName?: string;
+  description?: string;
+}
+
+function detectTool(command: string | undefined): string {
+  if (!command) return 'shell';
+  const head = command.trim().split(/\s+/)[0] ?? 'shell';
+  return head.toLowerCase();
 }
 
 export async function startStreamer(opts: StreamerOptions): Promise<void> {
-  const { hubUrl, walletAddress, command } = opts;
+  const { hubUrl, walletAddress, command, streamerName, description } = opts;
+  const tool = detectTool(command);
 
   // Step 1: POST /sessions to get sessionId
   let sessionId: string;
   try {
+    const body: CreateSessionRequest = {
+      streamerWallet: walletAddress,
+      streamerName,
+      description,
+      tool,
+    };
     const res = await fetch(`${hubUrl}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletAddress }),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {
@@ -26,7 +46,7 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
       throw new Error(`Hub returned ${res.status}: ${text}`);
     }
 
-    const data = (await res.json()) as { sessionId: string };
+    const data = (await res.json()) as CreateSessionResponse;
     sessionId = data.sessionId;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -111,6 +131,9 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     type: 'register_streamer',
     sessionId,
     walletAddress,
+    streamerName,
+    description,
+    tool,
   };
   // Wait a tick for the ws open event before sending
   setTimeout(() => ws.send(registerMsg), 100);

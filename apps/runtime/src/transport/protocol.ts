@@ -1,5 +1,12 @@
 export type StreamerToHub =
-  | { type: 'register_streamer'; sessionId: string; walletAddress: string }
+  | {
+      type: 'register_streamer';
+      sessionId: string;
+      walletAddress: string;
+      streamerName?: string;
+      description?: string;
+      tool?: string;
+    }
   | { type: 'stream_chunk'; data: string; ts: number }
   | { type: 'stream_end' };
 
@@ -8,6 +15,20 @@ export type HubToStreamer =
   | { type: 'viewer_count'; count: number }
   | { type: 'new_tip'; from: string; amount: number }
   | { type: 'chat_unread'; count: number };
+
+export interface CreateSessionRequest {
+  streamerWallet: string;
+  streamerName?: string;
+  description?: string;
+  tool?: string;
+  id?: string;
+}
+
+export interface CreateSessionResponse {
+  sessionId: string;
+  code: string;
+  startedAt: number;
+}
 
 export type ViewerToHub =
   | { type: 'join'; sessionId: string }

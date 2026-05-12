@@ -4,6 +4,8 @@ import { program } from 'commander';
 
 const HUB_URL = process.env['HAN_HUB_URL'] ?? 'http://localhost:3000';
 const WALLET = process.env['WALLET_ADDRESS'] ?? 'demo-wallet';
+const HANDLE = process.env['HAN_HANDLE'];
+const DESCRIPTION = process.env['HAN_DESCRIPTION'];
 
 program.name('han').version('0.1.0');
 
@@ -12,7 +14,13 @@ program
   .description('AI tool session yayinla')
   .action(async (command?: string) => {
     const { startStreamer } = await import('./streamer/index.js');
-    await startStreamer({ hubUrl: HUB_URL, walletAddress: WALLET, command });
+    await startStreamer({
+      hubUrl: HUB_URL,
+      walletAddress: WALLET,
+      command,
+      streamerName: HANDLE,
+      description: DESCRIPTION,
+    });
   });
 
 program

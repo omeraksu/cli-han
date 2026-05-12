@@ -82,11 +82,34 @@ app.get('/ws', { websocket: true }, (socket, _req) => {
   socket.on('close', () => {
     const existing = gateway.get(connId);
     if (existing?.sessionId) {
-      lobby.decrementViewers(existing.sessionId).catch((decErr: unknown) => {
-        logger.error({ err: decErr }, 'decrement viewers failed');
-      });
-      const fan = fanoutMap.get(existing.sessionId);
-      if (fan) fan.removeViewer(connId);
+      const sessionId = existing.sessionId;
+
+      if (existing.type === 'streamer') {
+        // The streamer left; tear the session down for everyone.
+        lobby.removeSession(sessionId).catch((removeErr: unknown) => {
+          logger.error({ err: removeErr, sessionId }, 'remove session failed');
+        });
+        cacheMap.delete(sessionId);
+        const fan = fanoutMap.get(sessionId);
+        if (fan) {
+          for (const viewerId of fan.viewerIds()) {
+            gateway.send(viewerId, { type: 'stream_end', sessionId });
+          }
+          fanoutMap.delete(sessionId);
+        }
+        db.session
+          .update({ where: { id: sessionId }, data: { endedAt: new Date() } })
+          .catch((dbErr: unknown) => {
+            logger.error({ err: dbErr, sessionId }, 'mark session ended failed');
+          });
+        logger.info({ sessionId }, 'streamer disconnected, session closed');
+      } else {
+        lobby.decrementViewers(sessionId).catch((decErr: unknown) => {
+          logger.error({ err: decErr }, 'decrement viewers failed');
+        });
+        const fan = fanoutMap.get(sessionId);
+        if (fan) fan.removeViewer(connId);
+      }
     }
     gateway.unregister(connId);
     chat.clearRateLimit(connId);

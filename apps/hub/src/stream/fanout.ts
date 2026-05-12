@@ -59,4 +59,8 @@ export class StreamFanout {
   viewerCount(): number {
     return this.viewers.size;
   }
+
+  viewerIds(): string[] {
+    return Array.from(this.viewers.keys());
+  }
 }
