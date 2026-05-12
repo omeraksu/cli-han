@@ -8,6 +8,17 @@ Han, AI ile çalışan geliştiriciler için terminal-native ambient social laye
 
 Hackathon: Solana Frontier Hackathon submission.
 
+## Live deployment
+
+| | Devnet |
+|---|---|
+| Program ID | `D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD` |
+| Explorer | https://explorer.solana.com/address/D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD?cluster=devnet |
+| IDL metadata | `5HyaoGGrbSAdtbdfSzpU4B5ntHm9svA4D6MvawJ4U6i2` |
+| Upgrade authority | `9mdvkieFVKursJ1rL2fCaxvNUuDkTznitSCk8u39RAZX` |
+| Hub authority (V2) | `GBTmt5CgCFfnjbruroanitjMVF8LF1EjabdQvkGrTSir` |
+| Mainnet | not yet — V1 hedef devnet |
+
 ## Hızlı kurulum
 
 ```bash
