@@ -26,6 +26,10 @@ export interface LobbySession {
   code: string;
   viewerCount: number;
   startedAt: number;
+  streamerName?: string;
+  description?: string;
+  tool?: string;
+  tipSol?: number;
 }
 
 export interface FeedItem {
