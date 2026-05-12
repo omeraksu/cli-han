@@ -111,74 +111,106 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
   let ptySession: PtySession | null = null;
   let viewerCount = 0;
   let tipTotalSol = 0;
-  let chatUnread = 0;
 
-  function printStatus(): void {
-    const parts = [
-      `\x1b[36m[han]\x1b[0m`,
-      `\x1b[2m◉\x1b[0m \x1b[32mlive\x1b[0m`,
-      `◎ \x1b[1m${viewerCount}\x1b[0m viewer${viewerCount === 1 ? '' : 's'}`,
-      `🔥 \x1b[33m${tipTotalSol.toFixed(3)}\x1b[0m SOL`,
-      `💬 \x1b[2m${chatUnread} unread\x1b[0m`,
-    ];
-    process.stderr.write(`\r${parts.join('  ')}   `);
+  function stderrLine(line: string): void {
+    // Emit on its own line so it never overwrites a shell prompt.
+    process.stderr.write(`\n${line}\n`);
+  }
+
+  // Forward host terminal → PTY, and host terminal resize → PTY size.
+  function wireStdin(pty: PtySession): void {
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+    }
+    process.stdin.resume();
+    process.stdin.on('data', (chunk: Buffer | string) => {
+      pty.write(typeof chunk === 'string' ? chunk : chunk.toString());
+    });
+    process.stdout.on('resize', () => {
+      const cols = process.stdout.columns ?? 80;
+      const rows = process.stdout.rows ?? 24;
+      pty.resize(cols, rows);
+    });
   }
 
   // Step 6: Handle messages from hub
   ws.on('registered', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'registered' }>, 'type'>;
-    console.error(`\n[han] Session ready. Share this code: ${p.code}\n`);
-    printStatus();
+    stderrLine(`\x1b[36m[han]\x1b[0m session ready · code: \x1b[1m${p.code}\x1b[0m`);
+    stderrLine(`\x1b[2mtype here as normal · Ctrl+D to stop streaming\x1b[0m`);
 
-    // Step 4: Start PTY
-    const shell = command ?? process.env['SHELL'] ?? '/bin/bash';
-    ptySession = new PtySession({
-      shell: command ? undefined : shell,
-      onData: (data) => {
-        // Step 5: Apply privacy filter, send stream_chunk
-        const filtered = applyPrivacyFilter(data);
-        const msg: StreamerToHub = {
-          type: 'stream_chunk',
-          data: filtered,
-          ts: Date.now(),
-        };
-        ws.send(msg);
-      },
-      onExit: (code) => {
-        console.error(`[streamer] PTY exited with code ${code}`);
-        const endMsg: StreamerToHub = { type: 'stream_end' };
-        ws.send(endMsg);
-        ws.close();
-        process.exit(code);
-      },
-    });
+    // Step 4: Start PTY (only if not already started)
+    if (!ptySession) {
+      const shell = command ?? process.env['SHELL'] ?? '/bin/zsh';
+      const pty = new PtySession({
+        shell: command ? undefined : shell,
+        onData: (data) => {
+          // Step 5: Apply privacy filter, send stream_chunk
+          const filtered = applyPrivacyFilter(data);
+          const msg: StreamerToHub = {
+            type: 'stream_chunk',
+            data: filtered,
+            ts: Date.now(),
+          };
+          ws.send(msg);
+        },
+        onExit: (code) => {
+          if (process.stdin.isTTY) {
+            try {
+              process.stdin.setRawMode(false);
+            } catch {
+              /* noop */
+            }
+          }
+          stderrLine(`[han] session ended (exit ${code})`);
+          const endMsg: StreamerToHub = { type: 'stream_end' };
+          ws.send(endMsg);
+          ws.close();
+          process.exit(code);
+        },
+      });
+      ptySession = pty;
+      wireStdin(pty);
 
-    if (command) {
-      ptySession.write(`${command}\n`);
+      if (command) {
+        pty.write(`${command}\n`);
+      }
     }
   });
 
   ws.on('viewer_count', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'viewer_count' }>, 'type'>;
+    if (p.count === viewerCount) return;
     viewerCount = p.count;
-    printStatus();
+    stderrLine(
+      `\x1b[2m[han]\x1b[0m ◎ ${viewerCount} viewer${viewerCount === 1 ? '' : 's'}`,
+    );
   });
 
   ws.on('new_tip', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'new_tip' }>, 'type'>;
     tipTotalSol += p.amount;
-    process.stderr.write(`\n\x1b[33m🔥 +${p.amount} SOL from ${p.from.slice(0, 4)}...\x1b[0m\n`);
-    printStatus();
+    stderrLine(
+      `\x1b[33m🔥 +${p.amount} SOL from ${p.from.slice(0, 4)}…\x1b[0m  ·  total ${tipTotalSol.toFixed(3)} SOL`,
+    );
   });
 
   ws.on('chat_unread', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'chat_unread' }>, 'type'>;
-    chatUnread = p.count;
-    printStatus();
+    if (p.count > 0) {
+      stderrLine(`\x1b[2m[han]\x1b[0m 💬 ${p.count} new chat`);
+    }
   });
 
   // Step 7: Handle process shutdown
   const shutdown = () => {
+    if (process.stdin.isTTY) {
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* noop */
+      }
+    }
     const endMsg: StreamerToHub = { type: 'stream_end' };
     ws.send(endMsg);
     ptySession?.kill();
@@ -188,6 +220,15 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
+  process.on('exit', () => {
+    if (process.stdin.isTTY) {
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* noop */
+      }
+    }
+  });
 
   // Step 3: Connect and send register_streamer
   ws.connect();
