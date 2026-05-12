@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, 2026-05-12.
+Accepted, 2026-05-12. **Revised** same day after Games sayfası (24:2) was fully inspected — see "Revision" section below.
 
 ## Context
 
@@ -64,3 +64,31 @@ Somut:
 - Topluluk SDK pattern'ı (`apps/hub/games/<oyun>/server.ts` + `apps/runtime/games/<oyun>/client.ts`)
 - 3 oyun engine: Roulette multiplayer, Pong, Type-race
 - SAS attestation game result için
+
+---
+
+## Revision — 2026-05-12 (same day)
+
+Games sayfası (`24:2`) tam taranınca durum değişti: Figma sadece Solo Roulette değil, **Pong + Type Race** için de tam akış çiziyor (5+5 ekran, on-chain stake + settle + SAS attest dahil). Buna rağmen 5 saatlik foundation hackathon kısıtı ve daha önce kullanıcının "UI'ı oyundan bağımsız yap" tercihi geçerli kalıyor.
+
+**Revize edilmiş V1 kapsamı:**
+
+- ✅ **Games Hub** (`24:11`) — 3 oyun menüsü, hepsi listede; Pong + Type Race "V1.1" rozetiyle. `/play` komutu hub'ı açar.
+- ✅ **Solo Roulette** — 4 ekran state machine (idle → spinning → result, plus wheel info), no stake, no engine bağı.
+- ❌ **Pong** — 5 ekran ve engine + on-chain stake V1.1'de.
+- ❌ **Type Race** — 5 ekran ve engine + on-chain stake V1.1'de.
+
+**Gerekçe**:
+- Roulette state machine 4 ekran (~2 saat iş), demo'da gameplay'li mini eğlence
+- Hub kartlarında Pong + Type Race görünüyor → ürün vizyonu net, "coming V1.1" rozeti tutarlı
+- Anchor program (`programs/han/`) zaten derlenip duruyor — V1.1'de çağrılmaya hazır
+- Hackathon demo videosunda Solo Roulette gameplay + Games Hub'ta diğer oyunların görünmesi yeterli storytelling
+
+**Implementation impact (revize):**
+
+| Dosya | Değişiklik |
+|---|---|
+| `apps/runtime/src/ui/Roulette.tsx` | 4-state machine'e genişlet (idle/spinning/result/wheel-info) |
+| `apps/runtime/src/ui/GamesHub.tsx` | Yeni — 3 kart, klavye nav (1-3 select, Q back) |
+| `apps/runtime/src/viewer/App.tsx` | `/play` slash command → GamesHub mount |
+| `figma-spec.md` | Games sayfası bölümü detaylı eklendi |

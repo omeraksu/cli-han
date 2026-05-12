@@ -4,6 +4,8 @@ import { Screen, Titlebar, SplitPane, Footer } from '../ui/Layout.js';
 import { BroadcastFeed } from '../ui/BroadcastFeed.js';
 import { ChatPanel } from '../ui/ChatPanel.js';
 import { RawStream } from '../ui/RawStream.js';
+import { GamesHub, type GameId } from '../ui/GamesHub.js';
+import { Roulette } from '../ui/Roulette.js';
 import { colors } from '../ui/colors.js';
 import type { WsClient } from '../transport/ws-client.js';
 import { useStream } from './hooks/useStream.js';
@@ -15,11 +17,13 @@ interface AppProps {
   streamerName: string;
 }
 
-type Mode = 'feed' | 'raw';
+type StreamMode = 'feed' | 'raw';
+type Overlay = null | 'games-hub' | 'roulette';
 
 export function App({ client, sessionCode, streamerName }: AppProps): JSX.Element {
   const { exit } = useApp();
-  const [mode, setMode] = useState<Mode>('feed');
+  const [mode, setMode] = useState<StreamMode>('feed');
+  const [overlay, setOverlay] = useState<Overlay>(null);
   const { feedItems, rawLines } = useStream(client);
   const { messages, send } = useChat(client);
 
@@ -37,18 +41,50 @@ export function App({ client, sessionCode, streamerName }: AppProps): JSX.Elemen
           client.send({ type: 'switch_mode', mode: 'feed' });
           return;
         }
+        if (cmd === 'play') {
+          setOverlay('games-hub');
+          return;
+        }
         if (cmd === 'quit') {
           client.close();
           exit();
           return;
         }
-        // /play, /tip — placeholders until later tasks land
         return;
       }
       send(text);
     },
     [client, send, exit]
   );
+
+  const handleGameSelect = useCallback((id: GameId) => {
+    if (id === 'roulette') {
+      setOverlay('roulette');
+    }
+  }, []);
+
+  const handleShareToChat = useCallback(
+    (label: string) => {
+      send(`🎲 rolled ${label}`);
+      setOverlay(null);
+    },
+    [send]
+  );
+
+  const rightPane = (() => {
+    if (overlay === 'games-hub') {
+      return <GamesHub onSelect={handleGameSelect} onQuit={() => setOverlay(null)} />;
+    }
+    if (overlay === 'roulette') {
+      return (
+        <Roulette
+          onShare={handleShareToChat}
+          onQuit={() => setOverlay('games-hub')}
+        />
+      );
+    }
+    return <ChatPanel messages={messages} onSend={handleSend} focused />;
+  })();
 
   return (
     <Screen>
@@ -61,13 +97,13 @@ export function App({ client, sessionCode, streamerName }: AppProps): JSX.Elemen
             <RawStream lines={rawLines} maxLines={32} />
           )
         }
-        right={<ChatPanel messages={messages} onSend={handleSend} focused />}
+        right={rightPane}
       />
       <Footer>
         <Box justifyContent="space-between">
           <Text color={colors.dim}>/raw   /play   /tip   /quit</Text>
           <Text color={colors.dim}>
-            {streamerName} · {mode} mode
+            {streamerName} · {overlay ?? mode} mode
           </Text>
         </Box>
       </Footer>

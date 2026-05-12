@@ -106,9 +106,72 @@ Canvas adı: **"🖥 Mockups"**. Toplam **9 ana ekran**, 4 alt grupta. Hepsi 900
 
 ---
 
-## 🎮 Games sayfası (`?`)
+## 🎮 Games sayfası (`24:2`)
 
-> Beklemede — kullanıcıdan node ID lazım.
+Canvas adı: **"🎮 Games"**. Toplam **14 ekran**, 3 oyun + 1 hub. Hepsi 900×600 terminal mockup.
+
+### A. Games Hub (`24:11`) — V1 ✅
+
+| Frame | ID | Konu |
+|---|---|---|
+| `00 · games hub` | `24:11` | `/play` komutu — 3 oyun kartı: Solo Roulette (`◇`, free, 10s), Pong (`◆`, 2-player, on-chain stake), Type Race (`✦`, up to 6 racers, winner takes pot). `[ 1-3 ] select [ Q ] back to stream` |
+
+### B. Solo Roulette (4 ekran) — V1 ✅
+
+| Frame | ID | Konu |
+|---|---|---|
+| `1.1 · idle` | `24:42` | Wheel kutusu (520×200) içinde `▮ ? ▮`, "press SPACE to spin". Komutlar: `[SPACE] spin`, `[W] see what's on the wheel`, `[Q] back to hub`. Hint: "→ free · no stake · just a nudge" |
+| `1.2 · spinning` | `24:58` | Wheel içinde `▮ ◆ ▮ ◇ ▮ ◆ ▮ ◇ ▮` flicker animation, "spinning...". Speed progress bar (400px, 260px filled), "slowing down..." |
+| `1.3 · result` | `24:73` | Wheel içinde `✦ COMMIT ✦` (amber bold) + dare 2 satır. Komutlar: `[R] spin again`, `[T] tip the host (0.05 SOL)`, `[S] share result in chat`, `[Q] quit` |
+| `1.4 · the wheel` | `24:89` | 6 nudge listesi (eşit ağırlık): COMMIT (ship), STRETCH (stand up 30s), SIP (water/coffee), READ (skim doc), SHARE (paste chat), NUDGE (tip another builder · 0.01 SOL). Hint: "customizable in V2" |
+
+### C. Pong (5 ekran) — **V1.1'e atıldı**
+
+| Frame | ID | Konu |
+|---|---|---|
+| `2.1 · pong lobby` | `24:121` | Oda kartları (3 örnek): alice's room (1/2, 0.01 SOL, open), open room (0/2, 0.05 SOL), kerem vs bob (2/2, busy). `[J] join [C] create [R] refresh` |
+| `2.2 · joining` | `24:147` | Stake confirm box: room, format (first to 3), stake, pot, network. Uyarı: "stake will lock in escrow until the game settles. if host cancels or after 24h, you can claim refund." `[Y] stake & join [N] cancel` |
+| `2.3 · ready` | `24:164` | 2 player kart (alice/you), pot 0.02 SOL "locked in escrow", "GAME STARTS IN 3" countdown, controls hint |
+| `2.4 · playing` | `24:184` | Score üstte (alice 1 vs you 0), field (852×360) içinde dashed center line, 2 paddle, 1 ball. Statusbar: "W/S paddle · ESC pause · ◉ live · pot 0.02 SOL · 3 watching" |
+| `2.5 · game over` | `24:220` | "✦ alice wins 3-2 ✦", settle box (final score, pot, winner, prize, settle tx). `✓ settled on-chain`, `✓ result attested via SAS · schema: game_result · explorer link`. `[R] rematch [Q] lobby` |
+
+### D. Type Race (5 ekran) — **V1.1'e atıldı**
+
+| Frame | ID | Konu |
+|---|---|---|
+| `3.1 · type race lobby` | `24:243` | Oda kartları: rust async basics (3/6, 168 chars, code), solana docs intro (1/6, 240 chars, prose, free), typescript types 101 (6/6, 312 chars). `[J] join [C] create` |
+| `3.2 · joining` | `24:268` | Preview box (yazılacak text), text length, racers, stake, pot. `[Y] stake & join [N] cancel` |
+| `3.3 · ready` | `24:289` | Racer listesi (◉ alice ready, ◉ bob ready, vs.), "auto-start in 30s", pot in escrow, "STARTING IN 3" countdown |
+| `3.4 · racing` | `24:312` | Live progress bars (her racer için), wpm, time. Bottom: text preview ile kursor pozisyonu. Statusbar: "3 viewers watching · pot 0.04 SOL · room rust-async" |
+| `3.5 · results` | `24:346` | Leaderboard (1 alice 100% 74wpm, 2 kerem, 3 you, 4 bob DNF). `✓ 0.04 SOL → alice.sol`, `✓ attested via SAS · game_result schema`. `[R] rematch [N] new text [Q] lobby` |
+
+### Games sayfası — kritik UI detayları
+
+**Renk kullanımı:**
+- Oyun sembolleri: ◇ (roulette dim), ◆ (pong cream), ✦ (type race amber)
+- Live/Open status: ◉ live = success-green, ◉ open = info teal, ◉ busy = ember/highlight
+- Pot SOL miktarı: 🔥 + ember bold
+- Result başlık: `✦ COMMIT ✦` veya `✦ alice wins ✦` → amber bold, büyük
+
+**Wheel kutusu** (Roulette): rounded border, ash bg, smoke border, 520×200, içerik ortalı
+
+**Stake confirm box**: rounded, ash bg, key-value satırları, alt'ta ⚠ uyarı 2 satır
+
+**Pong field**: 852×360, dashed center line (vertical, 8px segments, 2px gap), 2 paddle (8×64 each, sol/sağ), 1 ball (12×12 ellipse)
+
+**Type race progress bar**: `████████████████░░░░` block karakterleri (Unicode `█` ve `░`), 20 segment, % ve wpm sağda
+
+### V1 implementasyon kararı (revize)
+
+ADR `2026-05-12-game-decoupled-ui` revize edildi. V1 kapsamı:
+
+- ✅ Games Hub (24:11)
+- ✅ Solo Roulette 4 ekran (24:42, 24:58, 24:73, 24:89) — state machine UI (idle → spinning → result), no stake
+- ❌ Pong 5 ekran — V1.1'e atıldı (UI dahil hiçbir şey V1'de yok)
+- ❌ Type Race 5 ekran — V1.1'e atıldı
+- ❌ Anchor escrow on-chain bağı — V1.1'e atıldı (program kodu derlenir, runtime'dan çağrılmaz)
+
+Demo akışı: viewer `/play` → Games Hub → `1` ile Solo Roulette → SPACE ile spin → result → R ile tekrar veya Q ile geri. Pong + Type Race hub kartları görünür ama "coming in V1.1" overlay olabilir.
 
 ---
 
