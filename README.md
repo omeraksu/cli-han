@@ -24,20 +24,21 @@ pnpm install
 pnpm -r build
 pnpm --filter @han/hub exec prisma migrate dev --name init
 
-# 3) Hub'ı başlat (Terminal 1)
-cd apps/hub && node -r dotenv/config dist/index.js
+# 3) Hub'ı başlat (Terminal 1, repo kökünde)
+cd /path/to/cli-han
+pnpm hub
 # → "Hub listening on port 3000"
 
-# 4) Yayını aç (Terminal 2)
+# 4) Yayını aç (Terminal 2, repo kökünde)
 cd /path/to/cli-han
-node apps/runtime/dist/index.js stream
+pnpm stream
 # İlk açılışta wizard: handle + bio seç → ENTER
 # PTY açılır, ne istersen yaz (claude code, cargo build, vs.)
 # Alt çubukta: [han] ◉ live ◎ N viewers 🔥 X SOL
 
-# 5) İzleyici (Terminal 3) — başka bir kullanıcı veya başka bir wallet
+# 5) İzleyici (Terminal 3, repo kökünde)
 cd /path/to/cli-han
-node apps/runtime/dist/index.js browse
+pnpm browse
 # ↑↓ ile yayın seç, ENTER ile bağlan
 # Split pane: sol stream, sağ chat
 # /raw    → ham terminal'i izle
