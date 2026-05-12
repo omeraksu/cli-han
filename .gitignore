@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.js.map
+*.d.ts.map
+
+# Rust / Anchor
+target/
+.anchor/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.key
+*.pem
+id.json
+*-keypair.json
+keypair-*.json
+
+# Project artifacts (development bootstrap, not part of source)
+files.zip
+files/
+.superstack/
+architecture.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Prisma
+apps/hub/prisma/migrations/
+
+# pnpm
+.pnpm-store/

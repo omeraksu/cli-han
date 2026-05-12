@@ -1,0 +1,106 @@
+{
+  "$schema": "Post-tool hook executes AFTER Claude Code uses a tool. Use this for follow-up actions or validation.",
+  "rules": [
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "anchor build*",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Anchor build başarılı. IDL target/idl/ altında. sdk/idl/ ile senkron olmasını unutma. /deploy-devnet komutu bunu otomatik yapar."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "anchor test*",
+        "result": "failure"
+      },
+      "action": "delegate",
+      "agent": "debug-specialist",
+      "message": "Anchor test başarısız. debug-specialist root cause analizine başlıyor."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "pnpm test*",
+        "result": "failure"
+      },
+      "action": "delegate",
+      "agent": "debug-specialist",
+      "message": "Test başarısız. debug-specialist'e devrediliyor."
+    },
+    {
+      "match": {
+        "tool": "Edit",
+        "path": "programs/**/*.rs",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Program kaynak değişti. anchor build çalıştırıp IDL güncellemen önerilir. Sonra solana-client-engineer'a SDK refresh."
+    },
+    {
+      "match": {
+        "tool": "Edit",
+        "path": "sdk/idl/*.json",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "IDL güncellendi. solana-client-engineer'a TypeScript type'larını refresh ettir."
+    },
+    {
+      "match": {
+        "tool": "Edit",
+        "path": "apps/runtime/src/transport/**",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "WebSocket transport değişti. Hub tarafında protokol uyuşması için hub-engineer'a koordine et."
+    },
+    {
+      "match": {
+        "tool": "Edit",
+        "path": "apps/hub/src/api/**",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Hub API değişti. Runtime tarafında SDK call'ları etkileniyor mu, runtime-engineer ile kontrol et."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "git commit*",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Commit atıldı. Conventional Commits formatına uyduğundan emin ol (feat/fix/docs/chore/test, scope: runtime|hub|summarizer|games|ui|wallet|programs|sdk)."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "anchor build*",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Anchor build yeşil. programs/ değişti mi? Değiştiyse şu anda commit at: feat(programs)|chore(programs)|fix(programs). Han'da yeşil adım = commit."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "pnpm * test*",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Testler yeşil. Bu adımın sahibi agent şimdi commit atmalı. Scope: ilgili klasör (runtime|hub|summarizer|games|ui|wallet|sdk)."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "vitest*",
+        "result": "success"
+      },
+      "action": "notify",
+      "message": "Vitest yeşil. Commit at, sıradaki adıma geç."
+    }
+  ]
+}

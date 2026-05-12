@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "description": "GitHub issue, PR, repo data. Auth için Personal Access Token gerekir."
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Library docs için lazy loading. node-pty, ws, ink, Anchor, Privy, Fastify, Redis dökümantasyonu."
+    }
+  }
+}
