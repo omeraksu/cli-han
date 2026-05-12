@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Text, useApp } from 'ink';
+import { Box, Text, useApp } from 'ink';
 import { Screen, Titlebar, SplitPane, Footer } from '../ui/Layout.js';
 import { BroadcastFeed } from '../ui/BroadcastFeed.js';
 import { ChatPanel } from '../ui/ChatPanel.js';
@@ -64,11 +64,12 @@ export function App({ client, sessionCode, streamerName }: AppProps): JSX.Elemen
         right={<ChatPanel messages={messages} onSend={handleSend} focused />}
       />
       <Footer>
-        <Text color={colors.dim}>
-          /raw &nbsp;&nbsp; /play &nbsp;&nbsp; /tip &nbsp;&nbsp; /quit
-          {'                   '}
-          {streamerName} · {mode} mode
-        </Text>
+        <Box justifyContent="space-between">
+          <Text color={colors.dim}>/raw   /play   /tip   /quit</Text>
+          <Text color={colors.dim}>
+            {streamerName} · {mode} mode
+          </Text>
+        </Box>
       </Footer>
     </Screen>
   );
