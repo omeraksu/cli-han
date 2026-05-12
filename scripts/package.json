@@ -1,0 +1,16 @@
+{
+  "name": "@han/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tip": "node --env-file=../.env --experimental-strip-types --no-warnings test-tip.ts"
+  },
+  "dependencies": {
+    "@han/sdk": "workspace:*",
+    "@solana/web3.js": "^1.98.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}
