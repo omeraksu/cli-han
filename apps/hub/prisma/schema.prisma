@@ -10,6 +10,7 @@ datasource db {
 model Session {
   id                String       @id @db.VarChar(64)
   streamerWallet    String       @db.VarChar(64)
+  wsToken           String?      @db.VarChar(64)
   startedAt         DateTime
   endedAt           DateTime?
   totalViewers      Int          @default(0)

@@ -15,6 +15,7 @@ import { makeStreamerHandlers } from './ws/handlers/streamer.js';
 import { makeViewerHandlers } from './ws/handlers/viewer.js';
 import { sessionsRoutes } from './routes/sessions.js';
 import { tipsRoutes } from './routes/tips.js';
+import { configRoutes } from './routes/config.js';
 import type { HubContext } from './ws/context.js';
 
 // shared services
@@ -34,6 +35,7 @@ const ctx: HubContext = {
   gateway,
   chat,
   db,
+  redis,
 };
 
 // WS router
@@ -59,6 +61,7 @@ app.get('/health', async () => ({ ok: true, ts: Date.now() }));
 await app.register(async (instance) => {
   await sessionsRoutes(instance, ctx);
   await tipsRoutes(instance, ctx);
+  await configRoutes(instance);
 });
 
 // WebSocket endpoint

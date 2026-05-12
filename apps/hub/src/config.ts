@@ -1,4 +1,21 @@
 import { z } from 'zod';
+import { PublicKey } from '@solana/web3.js';
+
+const pubkeyString = z
+  .string()
+  .min(32)
+  .max(64)
+  .refine(
+    (s) => {
+      try {
+        new PublicKey(s);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: 'must be a valid Solana base58 pubkey' },
+  );
 
 const schema = z.object({
   PORT: z.coerce.number().default(3000),
@@ -10,6 +27,7 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   HUB_AUTHORITY_KEYPAIR: z.string().optional(),
   HAN_PROGRAM_ID: z.string().optional(),
+  HAN_FEE_COLLECTOR_PUBKEY: pubkeyString,
   SAS_CREDENTIAL_PDA: z.string().optional(),
   SAS_SCHEMA_PDA: z.string().optional(),
 });

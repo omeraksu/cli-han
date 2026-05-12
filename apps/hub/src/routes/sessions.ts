@@ -1,11 +1,28 @@
 import type { FastifyInstance } from 'fastify';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import { PublicKey } from '@solana/web3.js';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 import type { HubContext } from '../ws/context.js';
 import { logger } from '../logger.js';
 
+const NONCE_TTL_SECONDS = 60;
+const NONCE_BYTES = 32;
+const WS_TOKEN_BYTES = 32;
+
+function nonceKey(wallet: string, nonceHex: string): string {
+  return `han:nonce:${wallet}:${nonceHex}`;
+}
+
+const requestNonceSchema = z.object({
+  wallet: z.string().min(32).max(64),
+});
+
 const createSessionSchema = z.object({
   streamerWallet: z.string().min(32).max(64),
+  nonce: z.string().regex(/^[0-9a-f]+$/i).length(NONCE_BYTES * 2),
+  signature: z.string().min(1).max(128),
   streamerName: z.string().min(1).max(32).optional(),
   description: z.string().min(1).max(120).optional(),
   tool: z.string().min(1).max(32).optional(),
@@ -18,34 +35,79 @@ function generateSessionId(streamerWallet: string): string {
   return `${walletShort}.${suffix}`;
 }
 
+function verifyWalletSignature(wallet: string, nonceHex: string, signatureB58: string): boolean {
+  try {
+    const pubkey = new PublicKey(wallet);
+    const nonceBytes = Buffer.from(nonceHex, 'hex');
+    const sigBytes = bs58.decode(signatureB58);
+    if (sigBytes.length !== nacl.sign.signatureLength) return false;
+    return nacl.sign.detached.verify(nonceBytes, sigBytes, pubkey.toBytes());
+  } catch (err) {
+    logger.debug({ err }, 'signature verification threw');
+    return false;
+  }
+}
+
 export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Promise<void> {
-  // POST /sessions — streamer registers a new live session
+  // POST /sessions/nonce — issue a one-shot nonce for a wallet to sign
+  app.post('/sessions/nonce', async (request, reply) => {
+    const parsed = requestNonceSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid body', details: parsed.error.issues });
+    }
+    try {
+      new PublicKey(parsed.data.wallet);
+    } catch {
+      return reply.status(400).send({ error: 'invalid wallet pubkey' });
+    }
+
+    const nonceHex = randomBytes(NONCE_BYTES).toString('hex');
+    await ctx.redis.set(nonceKey(parsed.data.wallet, nonceHex), '1', 'EX', NONCE_TTL_SECONDS);
+
+    return reply.status(201).send({
+      nonce: nonceHex,
+      expiresAt: Date.now() + NONCE_TTL_SECONDS * 1000,
+      ttlSeconds: NONCE_TTL_SECONDS,
+    });
+  });
+
+  // POST /sessions — streamer registers a new live session.
+  // Requires a fresh nonce signed by the streamer wallet.
   app.post('/sessions', async (request, reply) => {
     const parsed = createSessionSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'invalid body', details: parsed.error.issues });
     }
-    const { streamerWallet, streamerName, description, tool } = parsed.data;
+    const { streamerWallet, nonce, signature, streamerName, description, tool } = parsed.data;
+
+    const key = nonceKey(streamerWallet, nonce);
+    const consumed = await ctx.redis.del(key);
+    if (consumed === 0) {
+      return reply.status(401).send({ error: 'nonce expired or already used' });
+    }
+
+    if (!verifyWalletSignature(streamerWallet, nonce, signature)) {
+      return reply.status(401).send({ error: 'invalid signature' });
+    }
+
     const id = parsed.data.id ?? generateSessionId(streamerWallet);
+    const wsToken = randomBytes(WS_TOKEN_BYTES).toString('hex');
 
     try {
       const session = await ctx.db.session.create({
         data: {
           id,
           streamerWallet,
+          wsToken,
           startedAt: new Date(),
         },
       });
-
-      // Lobby entry is created when the streamer actually opens the WS
-      // (register_streamer handler). If the client never reconnects this
-      // row stays in Postgres but never shows up as a zombie in the lobby.
-      // The optional metadata fields ride along on the register payload.
 
       logger.info({ sessionId: id, streamerWallet, tool }, 'session reserved');
       return reply.status(201).send({
         sessionId: id,
         code: id,
+        wsToken,
         startedAt: session.startedAt.getTime(),
         streamerName,
         description,

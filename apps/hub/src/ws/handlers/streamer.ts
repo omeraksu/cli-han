@@ -8,6 +8,7 @@ import { logger } from '../../logger.js';
 const registerStreamerSchema = z.object({
   sessionId: z.string().min(1),
   walletAddress: z.string().min(1),
+  wsToken: z.string().min(1),
   streamerName: z.string().min(1).max(32).optional(),
   description: z.string().min(1).max(120).optional(),
   tool: z.string().min(1).max(32).optional(),
@@ -65,7 +66,24 @@ export function makeStreamerHandlers(ctx: HubContext) {
       conn.ws.send(JSON.stringify({ type: 'error', message: 'invalid register_streamer payload' }));
       return;
     }
-    const { sessionId, walletAddress, streamerName, description, tool } = parsed.data;
+    const { sessionId, walletAddress, wsToken, streamerName, description, tool } = parsed.data;
+
+    const sessionRow = await ctx.db.session.findUnique({ where: { id: sessionId } });
+    if (!sessionRow || sessionRow.endedAt) {
+      conn.ws.send(JSON.stringify({ type: 'error', message: 'session not found' }));
+      conn.ws.close();
+      return;
+    }
+    if (sessionRow.streamerWallet !== walletAddress) {
+      conn.ws.send(JSON.stringify({ type: 'error', message: 'wallet does not match session' }));
+      conn.ws.close();
+      return;
+    }
+    if (!sessionRow.wsToken || sessionRow.wsToken !== wsToken) {
+      conn.ws.send(JSON.stringify({ type: 'error', message: 'invalid session token' }));
+      conn.ws.close();
+      return;
+    }
 
     conn.type = 'streamer';
     conn.sessionId = sessionId;

@@ -142,6 +142,14 @@ export async function tipsRoutes(app: FastifyInstance, ctx: HubContext): Promise
     const { sessionId, fromWallet, toWallet, feeCollector, amountLamports, txSignature } =
       parsed.data;
 
+    if (feeCollector !== config.HAN_FEE_COLLECTOR_PUBKEY) {
+      logger.warn(
+        { feeCollector, expected: config.HAN_FEE_COLLECTOR_PUBKEY, txSignature },
+        'tip rejected: fee collector mismatch',
+      );
+      return reply.status(422).send({ error: 'unauthorized fee collector' });
+    }
+
     const expectedFee = Math.floor((amountLamports * TIP_FEE_BPS) / BPS_DENOMINATOR);
     const expectedStreamer = amountLamports - expectedFee;
 
