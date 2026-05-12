@@ -25,13 +25,13 @@ Sık komutlar:
 - Runtime CLI: Node.js + TypeScript + node-pty + ws, dağıtım `npx @han/cli`
 - Hub: Node.js + Fastify + ws + Redis (state) + Postgres (persistence)
 - Summarizer: Anthropic API (Claude Sonnet) veya yayıncının kendi modeli
-- Games: server-authoritative state machine, WebSocket fanout, terminal canvas
+- Games: V1 sadece UI mockup (Roulette), engine V2'de — ADR `2026-05-12-game-decoupled-ui`
 - UI: ink (React for terminal) + raw ANSI escape codes
 - Wallet: Privy embedded wallet veya local keypair (devnet)
 - Programs: Anchor (Rust), `programs/` — sadece game escrow + refund yolları (cancel, claim, timeout)
 - SDK: TypeScript, `sdk/`
 - Cluster: devnet, mainnet hedef sonra
-- Solana micro-economy: tip (program-less, SystemProgram), game escrow + winner pot (Anchor), 24h timeout_refund (Anchor), attestation (**SAS üstünden, sas-lib**)
+- Solana micro-economy V1: **tip** (program-less, SystemProgram::transfer). Game escrow + attestation Anchor programda yazılı ama V1 demo'da çağrılmaz — V2 (ADR `2026-05-12-game-decoupled-ui`).
 - RPC: multi-endpoint failover (api.devnet.solana.com birincil, Helius ikincil)
 
 ## Üç ana akış
@@ -89,6 +89,7 @@ Sabitler:
 - ADR 2026-05-05-sas-vs-custom-pda: Attestation SAS üstünden, custom Anchor kapsam dışı
 - ADR 2026-05-05-refund-timeout: 24 saat timeout sonrası trustless refund, V1 zorunlu
 - ADR 2026-05-05-rpc-fallback: Multi-endpoint failover, Helius backup
+- ADR 2026-05-12-game-decoupled-ui: Game UI V1'de Roulette mockup, engine V2'de
 
 ## Geliştirme akışı
 

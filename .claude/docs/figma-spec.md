@@ -40,9 +40,69 @@ Han'ın görsel kimliği. Üç frame: wordmark hero, color tokens, typography.
 
 ---
 
-## 🖼 Mockups sayfası (`?`)
+## 🖥 Mockups sayfası (`3:3`)
 
-> Beklemede — kullanıcıdan node ID lazım.
+Canvas adı: **"🖥 Mockups"**. Toplam **9 ana ekran**, 4 alt grupta. Hepsi 900×600 terminal mockup formatı, üstte mac-style titlebar (3 ellipse + breadcrumb), altında statusbar.
+
+### A. Streamer flow
+
+| Frame | ID | Konu |
+|---|---|---|
+| `01 · han stream` | `10:10` | Yayıncı `han stream claude` çalıştırır — session created, id, url, "mode public · devnet", claude code lansmanı, alt status `▮ han abc-123 ◉ live ◎ 0 viewers public · devnet` |
+| `02 · stream active` | `10:29` | Yayın akıyor, claude kod yazıyor, dosya scaffold listesi, alt status `▮ han abc-123 ◉ live ◎ 7 viewers 🔥 0.12 SOL 💬 3 new` |
+
+### B. Viewer flow
+
+| Frame | ID | Konu |
+|---|---|---|
+| `03 · han browse` | `10:51` | Lobby kart listesi (4 yayın). Her kart: kullanıcı adı (cream bold), açıklama, "12 viewers · 1h2min · py + claude", sağda "🔥 0.42 SOL" |
+| `04 · connected · alice` | `10:81` | **Split pane** — sol "stream · alice ── feed ─" + intent (`⟁`) + actions (`▸`), sağ "chat ─" + kullanıcılar (teal bold) + mesajlar (cream). Alt komut bar `/raw /play /tip /quit` |
+
+### C. Interaction
+
+| Frame | ID | Konu |
+|---|---|---|
+| `05 · solo rulet` | `10:111` | Solo roulette wheel (520×170 kutu), "✦ COMMIT ✦" sonuç, dare text "make your next commit in the next 5 minutes". Hint "free spin · no stake · just for fun". Komutlar: `[R] spin again`, `[T] tip the host`, `[Q] quit` |
+| `06 · /tip alice` | `10:128` | Tip dialog. tipbox: `to alice.sol (7xK...mN9)`, `amount 0.05 SOL`, `network devnet`. `[Y] confirm [N] cancel`. Onay sonrası `✓ sent.`, `sig: 4xK...`, `solscan.io/tx/...`, "thanks for supporting the build 🔥" |
+
+### D. Live stats
+
+| Frame | ID | Konu |
+|---|---|---|
+| `A · status bar default` | `27:7` | **2-satır zengin status bar**. Satır 1: `▮ han · abc-123 · ◉ live ◎ 7 · 🔥 0.12 USDC · 💬 3 new · ◆ claude · sonnet 4.5 · $ 0.42 spent · ⏱ 23m`. Satır 2: `24.1k tok in · 8.2k out · 3 files touched · 5 cmds · peak 12 viewers · press /stats` |
+| `B · /stats streamer` | `27:35` | Streamer dashboard. 4 box: AI (prompts/tokens/cost/latency), AUDIENCE (viewers/peak/curve), ECONOMY (tips/margin), ACTIVITY (files/cmds/lines/games/top tipper) |
+| `C · /stats viewer` | `27:95` | Viewer perspective. Profile card (avatar + handle + pubkey + NOW intent). SESSION SNAPSHOT — viewers/tips/prompts/files/games/top tipper. MOMENTUM viewer curve sparkline |
+
+### Mockups — kritik UI detayları
+
+**Renk kullanımı** (Figma 04 split pane'den ölçüldü):
+- Bölüm başlıkları (`─ stream ─`, `─ chat ─`, `─ feed ─`) → **ember** bold
+- Intent satırı (`⟁`) → **cream**
+- Action satırları (`▸`) → **rotation: success-green / amber / teal** (her satır farklı, görsel ritm)
+- Kullanıcı adı (chat) → **teal** bold
+- Mesaj içeriği → **cream**
+- Hint/secondary text → **dim** (#6B6660 — yumuşatılmış cream)
+- Cursor → **cream** kutu (8×14), önünde `>` ember bold
+- Statusbar background → **ash**
+- Statusbar metin → **dim**, key komutlar (`/raw /play`) belirgin
+- Titlebar background → **ash**
+- Titlebar 3 ellipse → red/yellow/green sentetik mac dots (Figma'da generic ellipse, terminal'de basit `● ● ●` renkli render)
+- Vertical divider (split pane ortası) → **smoke** 1px
+
+**Tipografi**: JetBrains Mono 13px ana, 11px statusbar/secondary. Bold için JetBrains Mono Bold.
+
+**Layout**: 900px width = sabit yatay; terminal'de width'e göre ölçeklenir. Split pane oranı ~52/48 (470px sol / 410px sağ). Pong-için zorunlu min 80 col korunur.
+
+**Yeni semantic eklenen renkler** (brand'in 7 tokenı dışı, görsel ritm için):
+- **success-green** (`#82C784`) — yeşil action / test pass / success — `colors.successBright` olarak eklenebilir
+- **dim text** (`#6B6660`) — cream'in karartılmış varyantı, dim ANSI alternative
+
+### Implementasyon notları
+
+1. **Roulette ≠ Pong/Type-race.** Figma "solo rulet" gösteriyor, no stake, free spin. Daha önceki plan'da Pong/Type-race vardı — karar lazım (kullanıcıya soruldu).
+2. **Action satırları renk rotation** ufak bir görsel polish. İlk implementasyonda hepsi success-green olabilir, sonra rotation eklenir.
+3. **`/stats` ekranı** mevcut plan'da yoktu. V1 scope dışı bırakılabilir, V1.1'e atılır.
+4. **Statusbar 2-satır** zengin metrik — mevcut StatusBar.tsx'i bunu destekleyecek şekilde genişlet.
 
 ---
 
