@@ -8,6 +8,7 @@ export interface ViewerOptions {
   hubUrl: string;
   sessionId: string;
   walletAddress?: string;
+  handle?: string;
   streamerName?: string;
 }
 
@@ -16,14 +17,19 @@ export interface ViewerOptions {
  * the requested session.
  */
 export async function startViewer(opts: ViewerOptions): Promise<void> {
-  const { hubUrl, sessionId, streamerName } = opts;
+  const { hubUrl, sessionId, walletAddress, handle, streamerName } = opts;
 
   const wsUrl = hubUrl.replace(/^http/, 'ws');
   const client = new WsClient(`${wsUrl}/ws`);
   client.connect();
 
   setTimeout(() => {
-    const joinMsg: ViewerToHub = { type: 'join', sessionId };
+    const joinMsg: ViewerToHub = {
+      type: 'join',
+      sessionId,
+      walletAddress,
+      handle,
+    };
     client.send(joinMsg);
   }, 200);
 

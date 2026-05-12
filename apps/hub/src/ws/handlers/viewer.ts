@@ -5,6 +5,8 @@ import { logger } from '../../logger.js';
 
 const joinSchema = z.object({
   sessionId: z.string().min(1),
+  walletAddress: z.string().min(8).max(64).optional(),
+  handle: z.string().min(1).max(32).optional(),
 });
 
 const switchModeSchema = z.object({
@@ -15,6 +17,12 @@ const chatSendSchema = z.object({
   content: z.string().min(1).max(500),
 });
 
+function displayName(conn: { handle?: string; walletAddress?: string; id: string }): string {
+  if (conn.handle) return conn.handle;
+  if (conn.walletAddress) return conn.walletAddress.slice(0, 4).toLowerCase();
+  return `anon-${conn.id.slice(0, 4)}`;
+}
+
 export function makeViewerHandlers(ctx: HubContext) {
   async function handleJoin(conn: Connection, payload: unknown): Promise<void> {
     const parsed = joinSchema.safeParse(payload);
@@ -22,7 +30,7 @@ export function makeViewerHandlers(ctx: HubContext) {
       conn.ws.send(JSON.stringify({ type: 'error', message: 'invalid join payload' }));
       return;
     }
-    const { sessionId } = parsed.data;
+    const { sessionId, walletAddress, handle } = parsed.data;
 
     // check session exists in lobby
     const snapshot = await ctx.lobby.getSnapshot();
@@ -35,6 +43,8 @@ export function makeViewerHandlers(ctx: HubContext) {
     conn.type = 'viewer';
     conn.sessionId = sessionId;
     conn.mode = 'feed';
+    conn.walletAddress = walletAddress;
+    conn.handle = handle;
     ctx.gateway.register(conn);
 
     await ctx.lobby.incrementViewers(sessionId);
@@ -60,7 +70,17 @@ export function makeViewerHandlers(ctx: HubContext) {
     // send recent chat history
     const history = await ctx.chat.getHistory(sessionId);
     if (history.length > 0) {
-      conn.ws.send(JSON.stringify({ type: 'chat_history', messages: history }));
+      conn.ws.send(
+        JSON.stringify({
+          type: 'chat_history',
+          messages: history.map((m) => ({
+            id: m.id,
+            from: m.from,
+            content: m.content,
+            ts: m.ts,
+          })),
+        })
+      );
     }
   }
 
@@ -103,14 +123,20 @@ export function makeViewerHandlers(ctx: HubContext) {
       return;
     }
 
-    const msg = await ctx.chat.publish(sessionId, conn.id, content);
+    const from = displayName(conn);
+    const msg = await ctx.chat.publish(sessionId, conn.id, from, content);
 
-    // broadcast to all viewers in session
+    // broadcast in the runtime's chat_msg wire format (from / content / ts)
     const viewers = ctx.gateway.getViewersForSession(sessionId);
-    const msgPayload = JSON.stringify({ type: 'chat_message', message: msg });
+    const wireMsg = JSON.stringify({
+      type: 'chat_msg',
+      from: msg.from,
+      content: msg.content,
+      ts: msg.ts,
+    });
     for (const viewer of viewers) {
       if (viewer.ws.readyState === 1) {
-        viewer.ws.send(msgPayload);
+        viewer.ws.send(wireMsg);
       }
     }
   }

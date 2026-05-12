@@ -6,6 +6,8 @@ export interface Connection {
   type: 'streamer' | 'viewer';
   sessionId?: string;
   mode?: 'feed' | 'raw';
+  walletAddress?: string;
+  handle?: string;
 }
 
 export class WsGateway {

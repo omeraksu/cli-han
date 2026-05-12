@@ -31,15 +31,24 @@ export interface CreateSessionResponse {
 }
 
 export type ViewerToHub =
-  | { type: 'join'; sessionId: string }
+  | { type: 'join'; sessionId: string; walletAddress?: string; handle?: string }
   | { type: 'switch_mode'; mode: 'feed' | 'raw' }
   | { type: 'chat_send'; content: string };
+
+export interface ChatHistoryEntry {
+  id: string;
+  from: string;
+  content: string;
+  ts: number;
+}
 
 export type HubToViewer =
   | { type: 'snapshot'; sessions: LobbySession[] }
   | { type: 'feed_item'; item: FeedItem }
   | { type: 'raw_chunk'; data: string; ts: number }
-  | { type: 'chat_msg'; from: string; content: string; ts: number };
+  | { type: 'chat_msg'; from: string; content: string; ts: number }
+  | { type: 'chat_history'; messages: ChatHistoryEntry[] }
+  | { type: 'stream_end'; sessionId: string };
 
 export interface LobbySession {
   id: string;

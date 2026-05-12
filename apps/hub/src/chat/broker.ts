@@ -4,6 +4,7 @@ export interface ChatMessage {
   id: string;
   sessionId: string;
   connId: string;
+  from: string;
   content: string;
   ts: number;
 }
@@ -40,11 +41,17 @@ export class ChatBroker {
     return true;
   }
 
-  async publish(sessionId: string, connId: string, content: string): Promise<ChatMessage> {
+  async publish(
+    sessionId: string,
+    connId: string,
+    from: string,
+    content: string
+  ): Promise<ChatMessage> {
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       sessionId,
       connId,
+      from,
       content,
       ts: Date.now(),
     };

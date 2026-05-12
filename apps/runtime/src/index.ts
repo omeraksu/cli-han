@@ -40,7 +40,12 @@ program
   .description('Yayina baglan')
   .action(async (code: string) => {
     const { startViewer } = await import('./viewer/index.js');
-    await startViewer({ hubUrl: HUB_URL, sessionId: code, walletAddress: WALLET });
+    await startViewer({
+      hubUrl: HUB_URL,
+      sessionId: code,
+      walletAddress: WALLET,
+      handle: HANDLE,
+    });
   });
 
 program.parse();

@@ -10,14 +10,28 @@ interface ChatApi {
 }
 
 /**
- * Subscribes to chat_msg frames and exposes a `send` helper that emits
- * `chat_send` to the hub.
+ * Subscribes to chat_msg + chat_history frames and exposes a `send`
+ * helper that emits `chat_send` to the hub.
  */
 export function useChat(client: WsClient | null): ChatApi {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     if (!client) return;
+
+    client.on('chat_history', (payload) => {
+      const p = payload as {
+        messages: Array<{ id: string; from: string; content: string; ts: number }>;
+      };
+      const incoming: ChatMessage[] = p.messages.map((m) => ({
+        id: m.id,
+        user: m.from,
+        text: m.content,
+        ts: m.ts,
+      }));
+      setMessages(incoming.slice(-CHAT_HISTORY));
+    });
+
     client.on('chat_msg', (payload) => {
       const p = payload as { from: string; content: string; ts: number };
       setMessages((prev) => {
