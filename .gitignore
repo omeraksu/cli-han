@@ -49,8 +49,8 @@ logs/
 coverage/
 .nyc_output/
 
-# Prisma
-apps/hub/prisma/migrations/
+# Prisma — migrations should be committed; only the local dev cache is ignored
+# (none for now)
 
 # pnpm
 .pnpm-store/

@@ -30,14 +30,16 @@ model ChatMessage {
 }
 
 model Tip {
-  id             String   @id @default(uuid()) @db.Uuid
-  sessionId      String   @db.VarChar(64)
-  fromWallet     String   @db.VarChar(64)
-  toWallet       String   @db.VarChar(64)
-  amountLamports BigInt
-  txSignature    String   @db.VarChar(128)
-  createdAt      DateTime @default(now())
-  session        Session  @relation(fields: [sessionId], references: [id])
+  id                String   @id @default(uuid()) @db.Uuid
+  sessionId         String   @db.VarChar(64)
+  fromWallet        String   @db.VarChar(64)
+  toWallet          String   @db.VarChar(64)
+  amountLamports    BigInt
+  feeLamports       BigInt   @default(0)
+  streamerLamports  BigInt   @default(0)
+  txSignature       String   @db.VarChar(128)
+  createdAt         DateTime @default(now())
+  session           Session  @relation(fields: [sessionId], references: [id])
   @@map("tips")
 }
 
