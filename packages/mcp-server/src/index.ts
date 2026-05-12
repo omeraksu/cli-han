@@ -19,10 +19,15 @@ import 'dotenv/config';
  *
  * Env:
  *   HAN_HUB_URL          default http://localhost:3000
- *   WALLET_ADDRESS       required for streaming + tipping
- *   FEE_COLLECTOR_PUBKEY required for tipping
+ *   HAN_KEYPAIR_PATH     default ~/.config/solana/id.json
  *   SOLANA_RPC_URL       default https://api.devnet.solana.com
  *   SOLANA_CLUSTER       default devnet
+ *
+ * The streamer wallet is derived from the local Solana keypair — never
+ * passed via env. This makes signed handshakes possible and keeps
+ * `streamerWallet` consistent with the keypair that actually signs
+ * tips. The fee collector pubkey is fetched from the hub `/config`
+ * endpoint at tip time; it cannot be overridden by the client.
  *
  * ADR: 2026-05-13-mcp-server-architecture
  */
@@ -31,22 +36,43 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import WebSocket from 'ws';
 import { z } from 'zod';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 import {
   loadLocalKeypair,
   sendTipWithFee,
 } from '@han/sdk/dist/index.js';
 
 const HUB_URL = process.env['HAN_HUB_URL'] ?? 'http://localhost:3000';
-const WALLET = process.env['WALLET_ADDRESS'];
-const FEE_COLLECTOR = process.env['FEE_COLLECTOR_PUBKEY'];
+const KEYPAIR_PATH = process.env['HAN_KEYPAIR_PATH'];
 const RPC_URL = process.env['SOLANA_RPC_URL'] ?? 'https://api.devnet.solana.com';
 const CLUSTER = process.env['SOLANA_CLUSTER'] ?? 'devnet';
+
+let cachedKeypair: Keypair | null = null;
+function getKeypair(): Keypair {
+  if (!cachedKeypair) {
+    cachedKeypair = loadLocalKeypair(KEYPAIR_PATH);
+  }
+  return cachedKeypair;
+}
+
+let cachedHubConfig: { feeCollector: string; cluster: string; tipFeeBps: number } | null = null;
+async function getHubConfig(): Promise<{ feeCollector: string; cluster: string; tipFeeBps: number }> {
+  if (cachedHubConfig) return cachedHubConfig;
+  const res = await fetch(`${HUB_URL}/config`);
+  if (!res.ok) {
+    throw new Error(`hub /config returned ${res.status}: ${await res.text()}`);
+  }
+  cachedHubConfig = (await res.json()) as { feeCollector: string; cluster: string; tipFeeBps: number };
+  return cachedHubConfig;
+}
 
 interface ActiveSession {
   id: string;
   ws: WebSocket;
   walletAddress: string;
+  wsToken: string;
   startedAt: number;
 }
 
@@ -62,19 +88,36 @@ async function openSession(opts: {
   model?: string;
   handle?: string;
 }): Promise<ActiveSession> {
-  if (!WALLET) {
-    throw new Error('WALLET_ADDRESS env not set; han_stream_start needs a streamer wallet pubkey');
-  }
   if (active) {
     throw new Error(`a session is already live (${active.id}); call han_stream_stop first`);
   }
 
-  // 1) reserve a session id via REST
+  const kp = getKeypair();
+  const wallet = kp.publicKey.toBase58();
+
+  // 1) request a one-shot nonce
+  const nonceRes = await fetch(`${HUB_URL}/sessions/nonce`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wallet }),
+  });
+  if (!nonceRes.ok) {
+    throw new Error(`hub /sessions/nonce returned ${nonceRes.status}: ${await nonceRes.text()}`);
+  }
+  const { nonce } = (await nonceRes.json()) as { nonce: string };
+
+  // 2) sign the nonce with the local keypair
+  const nonceBytes = Buffer.from(nonce, 'hex');
+  const signature = bs58.encode(nacl.sign.detached(nonceBytes, kp.secretKey));
+
+  // 3) register the session with the signed proof
   const res = await fetch(`${HUB_URL}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      streamerWallet: WALLET,
+      streamerWallet: wallet,
+      nonce,
+      signature,
       streamerName: opts.handle,
       description: opts.description,
       tool: opts.tool ?? 'mcp',
@@ -83,9 +126,9 @@ async function openSession(opts: {
   if (!res.ok) {
     throw new Error(`hub /sessions returned ${res.status}: ${await res.text()}`);
   }
-  const body = (await res.json()) as { sessionId: string; code: string };
+  const body = (await res.json()) as { sessionId: string; code: string; wsToken: string };
 
-  // 2) open the WS, register as streamer
+  // 4) open the WS, register as streamer with the wsToken
   const wsUrl = HUB_URL.replace(/^http/, 'ws') + '/ws';
   const ws = new WebSocket(wsUrl);
   await new Promise<void>((resolve, reject) => {
@@ -97,7 +140,8 @@ async function openSession(opts: {
     JSON.stringify({
       type: 'register_streamer',
       sessionId: body.sessionId,
-      walletAddress: WALLET,
+      walletAddress: wallet,
+      wsToken: body.wsToken,
       streamerName: opts.handle,
       description: opts.description,
       tool: opts.tool ?? 'mcp',
@@ -107,7 +151,8 @@ async function openSession(opts: {
   active = {
     id: body.sessionId,
     ws,
-    walletAddress: WALLET,
+    walletAddress: wallet,
+    wsToken: body.wsToken,
     startedAt: Date.now(),
   };
 
@@ -298,16 +343,14 @@ server.tool(
     memo: z.string().max(120).optional(),
   },
   async ({ to, amountSol, sessionId, memo }) => {
-    if (!FEE_COLLECTOR) {
-      throw new Error('FEE_COLLECTOR_PUBKEY env not set; tipping requires a fee collector wallet');
-    }
+    const hubConfig = await getHubConfig();
     const connection = new Connection(RPC_URL, 'confirmed');
-    const viewer = loadLocalKeypair();
+    const viewer = getKeypair();
     const result = await sendTipWithFee({
       connection,
       viewer,
       streamer: new PublicKey(to),
-      feeCollector: new PublicKey(FEE_COLLECTOR),
+      feeCollector: new PublicKey(hubConfig.feeCollector),
       amountSol,
       memo,
     });
@@ -321,7 +364,7 @@ server.tool(
           sessionId,
           fromWallet: viewer.publicKey.toBase58(),
           toWallet: to,
-          feeCollector: FEE_COLLECTOR,
+          feeCollector: hubConfig.feeCollector,
           amountLamports: result.amountLamports,
           txSignature: result.signature,
         }),
