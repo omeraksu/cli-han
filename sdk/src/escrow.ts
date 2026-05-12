@@ -1,6 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
-import { BN } from '@coral-xyz/anchor';
+// @coral-xyz/anchor is CommonJS — import via default for Node ESM compat.
+import anchorPkg from '@coral-xyz/anchor';
+import type { BN as BNType } from '@coral-xyz/anchor';
 import { HanClient } from './client.js';
+const { BN } = anchorPkg;
 import { EscrowError } from './errors.js';
 import type { GameRoom, GameRoomStatus } from './types/game-room.js';
 
@@ -23,7 +26,7 @@ function encodeGameType(s: string): number[] {
   return Array.from(arr);
 }
 
-function roomIdToBN(roomId: bigint): BN {
+function roomIdToBN(roomId: bigint): BNType {
   return new BN(roomId.toString());
 }
 

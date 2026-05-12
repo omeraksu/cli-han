@@ -1,9 +1,8 @@
-import {
-  AnchorProvider,
-  Program,
-  type Idl,
-  BN,
-} from '@coral-xyz/anchor';
+// @coral-xyz/anchor ships as CommonJS, so under Node ESM we have to go
+// through the default export and pull the named bits out manually.
+import anchorPkg from '@coral-xyz/anchor';
+import type { Idl, Program as ProgramType } from '@coral-xyz/anchor';
+const { AnchorProvider, Program, BN } = anchorPkg;
 import {
   Connection,
   Keypair,
@@ -49,7 +48,7 @@ class KeypairWallet {
 }
 
 export class HanClient {
-  readonly program: Program;
+  readonly program: ProgramType;
   readonly connection: Connection;
   readonly wallet: Keypair;
 
