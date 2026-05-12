@@ -31,7 +31,7 @@ export class StreamFanout {
   }
 
   broadcast(event: StreamEvent): void {
-    const msg = JSON.stringify({ type: 'stream_event', payload: event });
+    const msg = JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts });
     for (const [, entry] of this.viewers) {
       if (entry.mode === 'raw' && entry.ws.readyState === 1 /* OPEN */) {
         entry.ws.send(msg);

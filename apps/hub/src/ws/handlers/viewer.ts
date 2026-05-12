@@ -58,12 +58,12 @@ export function makeViewerHandlers(ctx: HubContext) {
     // send lobby snapshot
     conn.ws.send(JSON.stringify({ type: 'joined', sessionId, session }));
 
-    // replay recent cache
+    // replay recent cache one raw_chunk at a time so the viewer's
+    // useStream hook can ingest it without a special handler
     const cache = ctx.cache.get(sessionId);
     if (cache) {
-      const recent = cache.getRecent();
-      if (recent.length > 0) {
-        conn.ws.send(JSON.stringify({ type: 'cache_replay', events: recent }));
+      for (const event of cache.getRecent()) {
+        conn.ws.send(JSON.stringify({ type: 'raw_chunk', data: event.data, ts: event.ts }));
       }
     }
 

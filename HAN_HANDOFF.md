@@ -557,6 +557,62 @@ Sabitler:
 
 ---
 
+## 13.5 Demo runbook (Sprint 1 sonrası, devnet)
+
+Sprint 1'in çıktısı — hub canlı, lobby gerçek metadata, chat çalışır, stream akışı raw mode'da viewer'a iner. 3 terminal açıp deneyebilirsin.
+
+### Önkoşullar (tek seferlik)
+
+```bash
+brew install redis postgresql@14    # zaten varsa atla
+brew services start redis
+brew services start postgresql@14
+createdb han
+cd /Users/omeraksu/https/han
+pnpm install && pnpm -r build
+pnpm --filter @han/hub exec prisma migrate dev --name init
+```
+
+### Demo akışı
+
+```bash
+# Terminal 1 — Hub
+cd /Users/omeraksu/https/han/apps/hub
+node -r dotenv/config dist/index.js
+# "Hub listening on port 3000" görmeli
+
+# Terminal 2 — Yayıncı
+cd /Users/omeraksu/https/han
+HAN_HANDLE=omar \
+HAN_DESCRIPTION="building han v1" \
+WALLET_ADDRESS=9mdvkieFVKursJ1rL2fCaxvNUuDkTznitSCk8u39RAZX \
+node apps/runtime/dist/index.js stream
+# PTY açılır, içeride `ls`, `echo merhaba`, vs. yaz
+
+# Terminal 3 — İzleyici #1
+cd /Users/omeraksu/https/han
+HAN_HANDLE=alice node apps/runtime/dist/index.js browse
+# Lobby'de "omar · building han v1 · 1 viewer · echo" görmeli
+# Ctrl+C → sonra
+node apps/runtime/dist/index.js connect <yayın-id>
+# Split pane görür. İçeride:
+#   /raw  → sol pane'de yayıncının terminal output'u akar
+#   /feed → broadcast feed (henüz boş, V1.5 summarizer)
+#   merhaba → chat'e mesaj (sağ pane), tüm izleyiciler görür
+#   /play → Games Hub → 1 (Roulette) → SPACE → result → S share to chat
+#   /quit
+```
+
+### Bilinen sınırlar (Sprint 1)
+
+- **Yayıncı UI overlay yok** — Sprint 2'de. Şu an streamer PTY çıktısı kendi terminal'inde, han metadata yok ekranda
+- **Tip flow gerçek SOL göndermiyor** — TipDialog mock, Sprint 2'de %3 komisyonlu gerçek devnet transferi
+- **Summarizer yok** — broadcast feed boş, raw mode tam çalışıyor
+- **Profile sayfası yok** — Sprint 3
+- **Pong + Type Race yok** — V1.5, sadece Roulette aktif
+
+---
+
 ## 14. Sık komutlar
 
 ```bash
