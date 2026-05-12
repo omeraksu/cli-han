@@ -2,7 +2,8 @@ import type { Redis } from 'ioredis';
 
 export interface ChatMessage {
   id: string;
-  sessionId: string;
+  /** Generic room identifier — for stream-rooms equals legacy sessionId. */
+  roomId: string;
   connId: string;
   from: string;
   content: string;
@@ -42,21 +43,21 @@ export class ChatBroker {
   }
 
   async publish(
-    sessionId: string,
+    roomId: string,
     connId: string,
     from: string,
-    content: string
+    content: string,
   ): Promise<ChatMessage> {
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
-      sessionId,
+      roomId,
       connId,
       from,
       content,
       ts: Date.now(),
     };
 
-    const key = `${HISTORY_KEY_PREFIX}${sessionId}`;
+    const key = `${HISTORY_KEY_PREFIX}${roomId}`;
     await this.redis.rpush(key, JSON.stringify(msg));
     await this.redis.ltrim(key, -HISTORY_MAX, -1);
     await this.redis.expire(key, 3600);
@@ -64,10 +65,15 @@ export class ChatBroker {
     return msg;
   }
 
-  async getHistory(sessionId: string): Promise<ChatMessage[]> {
-    const key = `${HISTORY_KEY_PREFIX}${sessionId}`;
+  async getHistory(roomId: string): Promise<ChatMessage[]> {
+    const key = `${HISTORY_KEY_PREFIX}${roomId}`;
     const items = await this.redis.lrange(key, 0, -1);
-    return items.map((item) => JSON.parse(item) as ChatMessage);
+    return items.map((item) => {
+      const parsed = JSON.parse(item) as ChatMessage & { sessionId?: string };
+      // Backward compat: old entries serialized `sessionId`.
+      if (!parsed.roomId && parsed.sessionId) parsed.roomId = parsed.sessionId;
+      return parsed;
+    });
   }
 
   clearRateLimit(connId: string): void {

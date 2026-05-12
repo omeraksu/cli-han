@@ -11,11 +11,14 @@ import { StreamFanout } from './stream/fanout.js';
 import { WsGateway } from './ws/gateway.js';
 import { WsRouter } from './ws/router.js';
 import { ChatBroker } from './chat/broker.js';
+import { RoomRegistry } from './rooms/registry.js';
+import { seedChannels } from './rooms/seed.js';
 import { makeStreamerHandlers } from './ws/handlers/streamer.js';
 import { makeViewerHandlers } from './ws/handlers/viewer.js';
 import { sessionsRoutes } from './routes/sessions.js';
 import { tipsRoutes } from './routes/tips.js';
 import { configRoutes } from './routes/config.js';
+import { roomsRoutes } from './routes/rooms.js';
 import type { HubContext } from './ws/context.js';
 
 // shared services
@@ -23,6 +26,7 @@ const redis = new Redis(config.REDIS_URL);
 const db = new PrismaClient();
 
 const lobby = new LobbyState(redis);
+const rooms = new RoomRegistry(redis);
 const gateway = new WsGateway();
 const chat = new ChatBroker(redis);
 const cacheMap = new Map<string, StreamCache>();
@@ -30,6 +34,7 @@ const fanoutMap = new Map<string, StreamFanout>();
 
 const ctx: HubContext = {
   lobby,
+  rooms,
   cache: cacheMap,
   fanout: fanoutMap,
   gateway,
@@ -37,6 +42,9 @@ const ctx: HubContext = {
   db,
   redis,
 };
+
+// Seed persistent channels on boot. Idempotent — won't overwrite live state.
+await seedChannels(rooms);
 
 // WS router
 const wsRouter = new WsRouter();
@@ -62,6 +70,7 @@ await app.register(async (instance) => {
   await sessionsRoutes(instance, ctx);
   await tipsRoutes(instance, ctx);
   await configRoutes(instance);
+  await roomsRoutes(instance, ctx);
 });
 
 // WebSocket endpoint
@@ -84,41 +93,54 @@ app.get('/ws', { websocket: true }, (socket, _req) => {
 
   socket.on('close', () => {
     const existing = gateway.get(connId);
-    if (existing?.sessionId) {
-      const sessionId = existing.sessionId;
-
+    const roomId = existing?.roomId ?? existing?.sessionId;
+    if (existing && roomId) {
       if (existing.type === 'streamer') {
-        // The streamer left; tear the session down for everyone.
-        lobby.removeSession(sessionId).catch((removeErr: unknown) => {
-          logger.error({ err: removeErr, sessionId }, 'remove session failed');
+        // The streamer left; tear the (stream) room down for everyone.
+        lobby.removeSession(roomId).catch((removeErr: unknown) => {
+          logger.error({ err: removeErr, sessionId: roomId }, 'remove session failed');
         });
-        cacheMap.delete(sessionId);
-        const fan = fanoutMap.get(sessionId);
+        rooms.closeRoom(roomId).catch((closeErr: unknown) => {
+          logger.error({ err: closeErr, roomId }, 'close room failed');
+        });
+        cacheMap.delete(roomId);
+        const fan = fanoutMap.get(roomId);
         if (fan) {
           for (const viewerId of fan.viewerIds()) {
-            gateway.send(viewerId, { type: 'stream_end', sessionId });
+            gateway.send(viewerId, { type: 'stream_end', sessionId: roomId });
+            gateway.send(viewerId, { type: 'room_closed', roomId, reason: 'stream_end' });
           }
-          fanoutMap.delete(sessionId);
+          fanoutMap.delete(roomId);
         }
         db.session
-          .update({ where: { id: sessionId }, data: { endedAt: new Date() } })
+          .update({ where: { id: roomId }, data: { endedAt: new Date() } })
           .catch((dbErr: unknown) => {
-            logger.error({ err: dbErr, sessionId }, 'mark session ended failed');
+            logger.error({ err: dbErr, sessionId: roomId }, 'mark session ended failed');
           });
-        logger.info({ sessionId }, 'streamer disconnected, session closed');
+        logger.info({ roomId }, 'streamer disconnected, stream-room closed');
       } else {
-        lobby.decrementViewers(sessionId).catch((decErr: unknown) => {
-          logger.error({ err: decErr }, 'decrement viewers failed');
+        // Regular member (viewer or chat-only) leaving.
+        rooms.decrementMembers(roomId).catch((decErr: unknown) => {
+          logger.error({ err: decErr, roomId }, 'decrement members failed');
         });
-        const fan = fanoutMap.get(sessionId);
+        // Legacy lobby counter, only matters for stream-rooms.
+        if (existing.type === 'viewer') {
+          lobby.decrementViewers(roomId).catch((decErr: unknown) => {
+            logger.error({ err: decErr }, 'decrement viewers failed');
+          });
+        }
+        const fan = fanoutMap.get(roomId);
         if (fan) fan.removeViewer(connId);
 
-        // broadcast new count to remaining viewers + streamer
-        const peers = gateway.getViewersForSession(sessionId).filter((c) => c.id !== connId);
-        const streamers = gateway.getStreamers().filter((c) => c.sessionId === sessionId);
+        // broadcast new member count to remaining peers + streamer (if any).
+        const peers = gateway.getMembersForRoom(roomId).filter((c) => c.id !== connId);
+        const streamers = gateway
+          .getStreamers()
+          .filter((c) => (c.roomId ?? c.sessionId) === roomId);
         const count = peers.length;
         for (const c of [...peers, ...streamers]) {
           gateway.send(c.id, { type: 'viewer_count', count });
+          gateway.send(c.id, { type: 'member_count', count });
         }
       }
     }

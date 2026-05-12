@@ -3,7 +3,15 @@ import type { WebSocket } from '@fastify/websocket';
 export interface Connection {
   id: string;
   ws: WebSocket;
-  type: 'streamer' | 'viewer';
+  /** Logical role on this connection. 'member' = social-only (no stream). */
+  type: 'streamer' | 'viewer' | 'member';
+  /** The room the connection is currently joined to. */
+  roomId?: string;
+  /**
+   * Legacy alias for roomId — kept so existing call sites that read
+   * `conn.sessionId` keep working. New code should read `conn.roomId`.
+   * @deprecated use `roomId`
+   */
   sessionId?: string;
   mode?: 'feed' | 'raw';
   walletAddress?: string;
@@ -37,8 +45,13 @@ export class WsGateway {
   }
 
   getViewersForSession(sessionId: string): Connection[] {
+    // Legacy name preserved; new code paths can use getMembersForRoom.
+    return this.getMembersForRoom(sessionId).filter((c) => c.type === 'viewer');
+  }
+
+  getMembersForRoom(roomId: string): Connection[] {
     return [...this.connections.values()].filter(
-      (c) => c.type === 'viewer' && c.sessionId === sessionId
+      (c) => (c.roomId ?? c.sessionId) === roomId && c.type !== 'streamer',
     );
   }
 

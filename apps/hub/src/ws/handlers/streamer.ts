@@ -87,6 +87,7 @@ export function makeStreamerHandlers(ctx: HubContext) {
 
     conn.type = 'streamer';
     conn.sessionId = sessionId;
+    conn.roomId = sessionId;
     ctx.gateway.register(conn);
 
     if (!ctx.cache.has(sessionId)) {
@@ -111,8 +112,22 @@ export function makeStreamerHandlers(ctx: HubContext) {
       tipSol: existing?.tipSol ?? 0,
     });
 
+    // Mirror the session into the new Room registry so the unified
+    // /rooms list surfaces live streams alongside channels and adhoc rooms.
+    const existingRoom = await ctx.rooms.get(sessionId);
+    if (!existingRoom) {
+      await ctx.rooms.createStreamRoom({
+        id: sessionId,
+        streamerWallet: walletAddress,
+        streamerName,
+        tool,
+        description,
+      });
+    }
+    await ctx.rooms.refreshStreamHeartbeat(sessionId);
+
     logger.info({ sessionId, walletAddress, tool }, 'streamer registered');
-    conn.ws.send(JSON.stringify({ type: 'registered', sessionId, code: sessionId }));
+    conn.ws.send(JSON.stringify({ type: 'registered', sessionId, code: sessionId, roomId: sessionId }));
 
     // notify existing viewers that session is live
     const viewers = ctx.gateway.getViewersForSession(sessionId);
