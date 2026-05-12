@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text, useInput } from 'ink';
 import { colors } from './colors.js';
 
-export type GameId = 'roulette' | 'pong' | 'type-race';
+export type GameId = 'roulette' | 'pong' | 'horse-race' | 'type-race';
 
 interface GameDef {
   id: GameId;
@@ -10,7 +10,7 @@ interface GameDef {
   symbolColor: string;
   title: string;
   description: string;
-  key: '1' | '2' | '3';
+  key: '1' | '2' | '3' | '4';
   available: boolean;
 }
 
@@ -28,10 +28,19 @@ const GAMES: GameDef[] = [
     id: 'pong',
     symbol: '◆',
     symbolColor: 'foreground',
-    title: 'pong',
-    description: '2-player. on-chain stake. first to 3.',
+    title: 'pong · solo',
+    description: 'vs cpu. free. first to 5. multiplayer next.',
     key: '2',
-    available: false,
+    available: true,
+  },
+  {
+    id: 'horse-race',
+    symbol: '▶',
+    symbolColor: 'info',
+    title: 'at yarışı',
+    description: 'pick a model. watch it race. 6 contenders.',
+    key: '3',
+    available: true,
   },
   {
     id: 'type-race',
@@ -39,7 +48,7 @@ const GAMES: GameDef[] = [
     symbolColor: 'highlight',
     title: 'type race',
     description: 'up to 6 racers. on-chain stake. winner takes pot.',
-    key: '3',
+    key: '4',
     available: false,
   },
 ];
@@ -93,7 +102,7 @@ export function GamesHub({ onSelect, onQuit, focused = true }: GamesHubProps): R
       </Box>
 
       <Box marginTop={2}>
-        <Text color={colors.info}>[ 1-3 ] select{'   '}</Text>
+        <Text color={colors.info}>[ 1-4 ] select{'   '}</Text>
         <Text color={colors.info}>[ Q ] back to stream</Text>
       </Box>
     </Box>

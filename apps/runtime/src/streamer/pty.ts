@@ -1,6 +1,7 @@
 import * as pty from 'node-pty';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { BROADCAST_COLS, BROADCAST_ROWS } from '../transport/constants.js';
 
 export interface PtyOptions {
   shell?: string;
@@ -53,10 +54,14 @@ export class PtySession {
     const shell = resolveShell(opts.shell);
     const cwd = opts.cwd ?? homedir();
 
+    // Pin to the fixed broadcast grid. Cursor-positioning escapes from
+    // full-screen TUIs (claude code, vim) line up 1:1 on the viewer's
+    // terminal emulator because both sides agree on the same geometry.
+    // The streamer's host terminal may be larger; output is letterboxed.
     this.proc = pty.spawn(shell, [], {
       name: 'xterm-256color',
-      cols: process.stdout.columns ?? 80,
-      rows: process.stdout.rows ?? 24,
+      cols: BROADCAST_COLS,
+      rows: BROADCAST_ROWS,
       cwd,
       env: buildEnv(),
     });
@@ -94,8 +99,8 @@ export class PtySession {
     this.proc.write(data);
   }
 
-  resize(cols: number, rows: number): void {
-    this.proc.resize(cols, rows);
+  resize(_cols: number, _rows: number): void {
+    // Broadcast grid is fixed (see constructor). Ignore host resizes.
   }
 
   kill(): void {

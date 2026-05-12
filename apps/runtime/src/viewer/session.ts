@@ -37,6 +37,18 @@ async function fetchSession(hubUrl: string, sessionId: string): Promise<SessionL
 export async function startViewer(opts: ViewerOptions): Promise<void> {
   const { hubUrl, sessionId, walletAddress, handle, streamerName } = opts;
 
+  // Diagnostic — logs once at viewer boot. Surfaces why keyboard input
+  // (chat, /play, game controls) can silently fail on some terminals.
+  // Remove once the iTerm / Terminal vs cmux discrepancy is resolved.
+  const stdinAsAny = process.stdin as unknown as { setRawMode?: unknown };
+  process.stderr.write(
+    `[viewer-diag] isTTY=${process.stdin.isTTY ?? false} ` +
+      `setRawMode=${typeof stdinAsAny.setRawMode === 'function'} ` +
+      `TERM=${process.env['TERM'] ?? 'unset'} ` +
+      `TERM_PROGRAM=${process.env['TERM_PROGRAM'] ?? 'unset'} ` +
+      `parent=${process.env['__CFBundleIdentifier'] ?? 'unset'}\n`,
+  );
+
   const session = await fetchSession(hubUrl, sessionId);
 
   const wsUrl = hubUrl.replace(/^http/, 'ws');

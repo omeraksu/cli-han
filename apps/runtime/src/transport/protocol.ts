@@ -3,6 +3,7 @@ export type StreamerToHub =
       type: 'register_streamer';
       sessionId: string;
       walletAddress: string;
+      wsToken: string;
       streamerName?: string;
       description?: string;
       tool?: string;
@@ -18,6 +19,8 @@ export type HubToStreamer =
 
 export interface CreateSessionRequest {
   streamerWallet: string;
+  nonce: string;
+  signature: string;
   streamerName?: string;
   description?: string;
   tool?: string;
@@ -27,7 +30,14 @@ export interface CreateSessionRequest {
 export interface CreateSessionResponse {
   sessionId: string;
   code: string;
+  wsToken: string;
   startedAt: number;
+}
+
+export interface RequestNonceResponse {
+  nonce: string;
+  expiresAt: number;
+  ttlSeconds: number;
 }
 
 export type ViewerToHub =

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Text, useApp } from 'ink';
+import { Box, Text, useApp, useInput } from 'ink';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { loadLocalKeypair, sendTipWithFee } from '@han/sdk';
 import { Screen, Titlebar, SplitPane, Footer } from '../ui/Layout.js';
@@ -8,6 +8,8 @@ import { ChatPanel } from '../ui/ChatPanel.js';
 import { RawStream } from '../ui/RawStream.js';
 import { GamesHub, type GameId } from '../ui/GamesHub.js';
 import { Roulette } from '../ui/Roulette.js';
+import { Pong } from '../ui/Pong.js';
+import { HorseRace } from '../ui/HorseRace.js';
 import { TipDialog, type TipState } from '../ui/TipDialog.js';
 import { ProfileScreen, type HanProfile, type ProfileView } from '../ui/Profile.js';
 import { colors } from '../ui/colors.js';
@@ -26,7 +28,7 @@ interface AppProps {
 }
 
 type StreamMode = 'feed' | 'raw';
-type Overlay = null | 'games-hub' | 'roulette' | 'tip' | 'profile';
+type Overlay = null | 'games-hub' | 'roulette' | 'pong' | 'horse-race' | 'tip' | 'profile';
 
 interface ProfileOverlayState {
   view: ProfileView;
@@ -64,6 +66,15 @@ export function App({
   // it does, `feed` is always empty. Users can flip back via /feed.
   const [mode, setMode] = useState<StreamMode>('raw');
 
+  // Split ratio between stream pane (left) and chat/overlay pane (right).
+  // [ shifts the divider left (right pane grows), ] shifts it right.
+  // Only active while an overlay is open so it never eats chat keystrokes.
+  const SPLIT_DEFAULT = 0.52;
+  const SPLIT_OVERLAY_DEFAULT = 0.42;
+  const SPLIT_MIN = 0.25;
+  const SPLIT_MAX = 0.75;
+  const [splitRatio, setSplitRatio] = useState(SPLIT_DEFAULT);
+
   // Tell the hub our initial mode so the fanout adds us to the raw bucket.
   useEffect(() => {
     const t = setTimeout(() => {
@@ -77,9 +88,28 @@ export function App({
     status: 'confirm',
   });
   const [profileOverlay, setProfileOverlay] = useState<ProfileOverlayState | null>(null);
-  const { feedItems, rawLines, semantic } = useStream(client);
+  const { feedItems, terminalSnapshot, semantic } = useStream(client);
   const { messages, send } = useChat(client);
   const metrics = useViewerMetrics(client);
+
+  // When entering / leaving an overlay, snap the split to a sensible default
+  // so games get more breathing room and chat goes back to ~52/48.
+  useEffect(() => {
+    setSplitRatio(overlay ? SPLIT_OVERLAY_DEFAULT : SPLIT_DEFAULT);
+  }, [overlay]);
+
+  // Adjust the split with [ / ]. Disabled while chat is focused (overlay
+  // null) and while text input dialogs (tip) are active.
+  useInput(
+    (input) => {
+      if (input === '[') {
+        setSplitRatio((r) => Math.max(SPLIT_MIN, +(r - 0.05).toFixed(2)));
+      } else if (input === ']') {
+        setSplitRatio((r) => Math.min(SPLIT_MAX, +(r + 0.05).toFixed(2)));
+      }
+    },
+    { isActive: overlay !== null && overlay !== 'tip' },
+  );
 
   const runTip = useCallback(async () => {
     if (!streamerWallet) {
@@ -224,6 +254,10 @@ export function App({
   const handleGameSelect = useCallback((id: GameId) => {
     if (id === 'roulette') {
       setOverlay('roulette');
+    } else if (id === 'pong') {
+      setOverlay('pong');
+    } else if (id === 'horse-race') {
+      setOverlay('horse-race');
     }
   }, []);
 
@@ -248,6 +282,23 @@ export function App({
             setOverlay('tip');
           }}
           onQuit={() => setOverlay('games-hub')}
+        />
+      );
+    }
+    if (overlay === 'pong') {
+      return (
+        <Pong
+          onQuit={() => setOverlay('games-hub')}
+          playerName={'you'}
+          focused
+        />
+      );
+    }
+    if (overlay === 'horse-race') {
+      return (
+        <HorseRace
+          onQuit={() => setOverlay('games-hub')}
+          focused
         />
       );
     }
@@ -311,6 +362,7 @@ export function App({
     <Screen>
       <Titlebar title={`~/  —  han viewer · ${sessionCode}`} />
       <SplitPane
+        leftRatio={splitRatio}
         left={
           mode === 'feed' ? (
             <BroadcastFeed
@@ -320,14 +372,17 @@ export function App({
               streamerName={streamerName}
             />
           ) : (
-            <RawStream lines={rawLines} maxLines={32} />
+            <RawStream snapshot={terminalSnapshot} />
           )
         }
         right={rightPane}
       />
       <Footer>
         <Box justifyContent="space-between">
-          <Text color={colors.dim}>/raw  /play  /tip  /profile  /quit</Text>
+          <Text color={colors.dim}>
+            /raw  /play  /tip  /profile  /quit
+            {overlay && overlay !== 'tip' ? '   ·   [ [ / ] ] resize' : ''}
+          </Text>
           <Box>
             <Text color={colors.dim}>{metrics.viewerCount} viewers</Text>
             <Text color={colors.dim}>{'  ·  '}</Text>

@@ -1,5 +1,8 @@
 import React from 'react';
 import { render } from 'ink';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
+import type { Keypair } from '@solana/web3.js';
 import { WsClient } from '../transport/ws-client.js';
 import { applyPrivacyFilter } from './privacy-filter.js';
 import { PtySession } from './pty.js';
@@ -9,12 +12,13 @@ import type {
   CreateSessionRequest,
   CreateSessionResponse,
   HubToStreamer,
+  RequestNonceResponse,
   StreamerToHub,
 } from '../transport/protocol.js';
 
 export interface StreamerOptions {
   hubUrl: string;
-  walletAddress: string;
+  walletKeypair: Keypair;
   command?: string;
   streamerName?: string;
   description?: string;
@@ -50,7 +54,8 @@ async function runFirstTimeSetup(
 }
 
 export async function startStreamer(opts: StreamerOptions): Promise<void> {
-  const { hubUrl, walletAddress, command } = opts;
+  const { hubUrl, walletKeypair, command } = opts;
+  const walletAddress = walletKeypair.publicKey.toBase58();
   let streamerName = opts.streamerName;
   let description = opts.description;
   const tool = detectTool(command);
@@ -76,11 +81,26 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     description = description ?? existingProfile.bio;
   }
 
-  // Step 1: POST /sessions to get sessionId
+  // Step 1: signed handshake — fetch nonce, sign it, POST /sessions
   let sessionId: string;
+  let wsToken: string;
   try {
+    const nonceRes = await fetch(`${hubUrl}/sessions/nonce`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet: walletAddress }),
+    });
+    if (!nonceRes.ok) {
+      throw new Error(`Hub /sessions/nonce returned ${nonceRes.status}: ${await nonceRes.text()}`);
+    }
+    const { nonce } = (await nonceRes.json()) as RequestNonceResponse;
+    const nonceBytes = Buffer.from(nonce, 'hex');
+    const signature = bs58.encode(nacl.sign.detached(nonceBytes, walletKeypair.secretKey));
+
     const body: CreateSessionRequest = {
       streamerWallet: walletAddress,
+      nonce,
+      signature,
       streamerName,
       description,
       tool,
@@ -98,6 +118,7 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
 
     const data = (await res.json()) as CreateSessionResponse;
     sessionId = data.sessionId;
+    wsToken = data.wsToken;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[streamer] failed to register session: ${msg}`);
@@ -117,7 +138,9 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     process.stderr.write(`\n${line}\n`);
   }
 
-  // Forward host terminal → PTY, and host terminal resize → PTY size.
+  // Forward host terminal → PTY. The PTY is pinned to the broadcast
+  // grid (BROADCAST_COLS × BROADCAST_ROWS), so we deliberately do not
+  // forward host resize events.
   function wireStdin(pty: PtySession): void {
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(true);
@@ -125,11 +148,6 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     process.stdin.resume();
     process.stdin.on('data', (chunk: Buffer | string) => {
       pty.write(typeof chunk === 'string' ? chunk : chunk.toString());
-    });
-    process.stdout.on('resize', () => {
-      const cols = process.stdout.columns ?? 80;
-      const rows = process.stdout.rows ?? 24;
-      pty.resize(cols, rows);
     });
   }
 
@@ -237,6 +255,7 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     type: 'register_streamer',
     sessionId,
     walletAddress,
+    wsToken,
     streamerName,
     description,
     tool,

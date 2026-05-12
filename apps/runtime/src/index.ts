@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { program } from 'commander';
+import { loadLocalKeypair } from '@han/sdk/dist/index.js';
 
 const HUB_URL = process.env['HAN_HUB_URL'] ?? 'http://localhost:3000';
+const KEYPAIR_PATH = process.env['HAN_KEYPAIR_PATH'];
 const WALLET = process.env['WALLET_ADDRESS'] ?? 'demo-wallet';
 const HANDLE = process.env['HAN_HANDLE'];
 const DESCRIPTION = process.env['HAN_DESCRIPTION'];
@@ -14,9 +16,10 @@ program
   .description('AI tool session yayinla')
   .action(async (command?: string) => {
     const { startStreamer } = await import('./streamer/index.js');
+    const walletKeypair = loadLocalKeypair(KEYPAIR_PATH);
     await startStreamer({
       hubUrl: HUB_URL,
-      walletAddress: WALLET,
+      walletKeypair,
       command,
       streamerName: HANDLE,
       description: DESCRIPTION,
