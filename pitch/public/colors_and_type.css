@@ -1,0 +1,453 @@
+/* ──────────────────────────────────────────────────────────────────
+ * Han Design System — colors & type
+ * Source of truth: Figma /Brand/02-color-tokens + /Brand/03-typography
+ * ──────────────────────────────────────────────────────────────────
+ *
+ * Drop this file into the <head> of any Han HTML artifact:
+ *   <link rel="stylesheet" href="colors_and_type.css">
+ *
+ * Then use the tokens (--cream, --ember, …) or the utility classes
+ * (.t-display, .t-eyebrow, .terminal-frame, …).
+ */
+
+/* Fonts — JetBrains Mono + Inter, via Google Fonts CDN.
+ * If you self-host, drop .woff2 files into ./fonts/ and replace this. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root {
+  /* ── Color tokens ───────────────────────────────────────────── */
+  /* Surfaces */
+  --ink:      #0E0E0E;    /* page background — universal */
+  --ash:      #1A1816;    /* surface — titlebar, statusbar, card body */
+  --smoke:    #2A2826;    /* border / hairline divider */
+  --void:     #0A0A0A;    /* deeper black — game field bg */
+
+  /* Foreground */
+  --cream:    #EDE6D6;    /* primary text */
+  --mute:     #8c8780;    /* secondary / meta — bumped for WCAG AA on --ink */
+  --mute-2:   #70695f;    /* tertiary / placeholder — bumped for WCAG AA */
+
+  /* Accents (semantic) */
+  --ember:    #E0633A;    /* brand accent, primary action, section labels */
+  --ember-hi: #EB7549;    /* ember hover */
+  --teal:     #5FA8A0;    /* info, keyboard hints, links */
+  --amber:    #E8C56B;    /* highlight, warning */
+  --mint:     #82C784;    /* success */
+  --rose:     #E07A7A;    /* error (not seen in source — added for completeness) */
+
+  /* Traffic lights — used ONLY in terminal-frame chrome */
+  --tl-red:    #FF5F57;
+  --tl-amber:  #FEBC2E;
+  --tl-green:  #28C840;
+
+  /* ── Type tokens ───────────────────────────────────────────── */
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+                  Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                  Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Display + UI scale (most used: JetBrains Mono) */
+  --type-hero-size:    240px;  --type-hero-lh:    1.0;
+  --type-display-size: 56px;   --type-display-lh: 1.1;
+  --type-h1-size:      40px;   --type-h1-lh:      1.1;
+  --type-h2-size:      28px;   --type-h2-lh:      1.1;
+  --type-h3-size:      18px;   --type-h3-lh:      1.6;
+  --type-code-size:    14px;   --type-code-lh:    1.4;
+  --type-ui-size:      13px;   --type-ui-lh:      1.6;
+  --type-meta-size:    12px;   --type-meta-lh:    1.6;
+  --type-eyebrow-size: 12px;   --type-eyebrow-tracking: 0.12em;
+  --type-tiny-size:    11px;   --type-tiny-tracking:    0.04em;
+
+  /* ── Spacing scale (4-based) ───────────────────────────────── */
+  --s-1:   4px;
+  --s-2:   8px;
+  --s-3:   12px;
+  --s-4:   16px;
+  --s-5:   20px;
+  --s-6:   24px;
+  --s-7:   30px;
+  --s-8:   32px;
+  --s-9:   40px;
+  --s-10:  60px;
+  --s-11:  80px;
+  --s-12:  100px;
+  --s-13:  120px;
+
+  /* ── Radii ─────────────────────────────────────────────────── */
+  --r-sm:    4px;     /* inputs, small pills */
+  --r-md:    6px;     /* buttons, small cards, avatar tile */
+  --r-lg:    12px;    /* terminal frame, large cards */
+  --r-full:  9999px;
+
+  /* ── Borders ───────────────────────────────────────────────── */
+  --border:        1px solid var(--smoke);
+  --border-focus:  2px solid var(--teal);
+
+  /* ── Motion ────────────────────────────────────────────────── */
+  --t-fast:   80ms;
+  --t-med:    120ms;
+  --easing:   steps(1, end);   /* terminal aesthetic — no smooth */
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Base / reset
+ * ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: var(--type-code-size);
+  line-height: var(--type-code-lh);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--cream);
+  text-decoration: none;
+  transition: color var(--t-fast) linear;
+}
+a:hover { color: var(--ember); }
+
+::selection { background: var(--ember); color: var(--ink); }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input, textarea {
+  font: inherit;
+  color: var(--cream);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Semantic type classes
+ * ──────────────────────────────────────────────────────────────── */
+.t-hero {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--type-hero-size);
+  line-height: var(--type-hero-lh);
+  color: var(--cream);
+  letter-spacing: -0.01em;
+}
+.t-display {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--type-display-size);
+  line-height: var(--type-display-lh);
+  color: var(--cream);
+}
+.t-h1 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--type-h1-size);
+  line-height: var(--type-h1-lh);
+  color: var(--cream);
+}
+.t-h2 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-lh);
+  color: var(--cream);
+}
+.t-h3 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-lh);
+  color: var(--cream);
+}
+.t-code, .t-body-mono {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--type-code-size);
+  line-height: var(--type-code-lh);
+  color: var(--cream);
+}
+.t-ui {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-lh);
+  color: var(--cream);
+}
+.t-meta {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-lh);
+  color: var(--mute);
+}
+.t-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--type-eyebrow-size);
+  line-height: 1.0;
+  letter-spacing: var(--type-eyebrow-tracking);
+  color: var(--ember);
+  text-transform: uppercase;
+}
+.t-tiny {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--type-tiny-size);
+  line-height: 1.0;
+  letter-spacing: var(--type-tiny-tracking);
+  color: var(--mute);
+}
+.t-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--cream);
+}
+.t-body-lg {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--mute);
+}
+
+/* Color modifiers — apply to any text class */
+.c-cream  { color: var(--cream); }
+.c-mute   { color: var(--mute); }
+.c-mute-2 { color: var(--mute-2); }
+.c-ember  { color: var(--ember); }
+.c-teal   { color: var(--teal); }
+.c-amber  { color: var(--amber); }
+.c-mint   { color: var(--mint); }
+.c-rose   { color: var(--rose); }
+
+/* Surfaces */
+.bg-ink   { background: var(--ink); }
+.bg-ash   { background: var(--ash); }
+.bg-smoke { background: var(--smoke); }
+.bg-void  { background: var(--void); }
+.bg-ember { background: var(--ember); }
+.bg-teal  { background: var(--teal); }
+
+/* ────────────────────────────────────────────────────────────────
+ * Component primitives
+ * ──────────────────────────────────────────────────────────────── */
+
+/* Block cursor — the orange ▮ used as inline brand mark */
+.cursor-block {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  background: var(--ember);
+  vertical-align: -3px;
+  margin-left: 4px;
+}
+.cursor-block.lg { width: 12px; height: 22px; vertical-align: -3px; }
+.cursor-block.cream { background: var(--cream); }
+
+/* Blinking cursor (cream, in-text) */
+.cursor-blink {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--cream);
+  vertical-align: -2px;
+  animation: han-blink 1.06s step-end infinite;
+}
+@keyframes han-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* Section eyebrow label "/ HOW" */
+.eyebrow::before { content: "/ "; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 24px;
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: background var(--t-med) linear, color var(--t-med) linear, border-color var(--t-med) linear;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--ember);
+  color: var(--ink);
+  border: 1px solid var(--ember);
+}
+.btn-primary:hover { background: var(--ember-hi); border-color: var(--ember-hi); }
+.btn-primary:active { background: #C9572F; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid var(--smoke);
+  font-weight: 500;
+}
+.btn-secondary:hover { border-color: var(--cream); }
+.btn-secondary:active { background: rgba(237, 230, 214, 0.04); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--mute);
+  border: 0;
+  padding: 0 8px;
+}
+.btn-ghost:hover { color: var(--cream); }
+
+/* Chip / pill */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--smoke);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--mute);
+}
+.chip-ember { color: var(--ember); border-color: var(--ember); }
+.chip-teal  { color: var(--teal); border-color: var(--teal); }
+
+/* Card */
+.card {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: var(--r-md);
+  padding: 24px;
+}
+.card-lg { border-radius: var(--r-lg); padding: 32px; }
+
+/* Input — handle/bio style */
+.input {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--cream);
+  width: 100%;
+}
+.input:focus,
+.input.is-focused { border: 2px solid var(--teal); padding: 0 15px; }
+
+/* Hairline divider */
+.hairline { height: 1px; background: var(--smoke); width: 100%; }
+
+/* Slide anchor — 4×120 ember bar */
+.slide-anchor {
+  width: 4px;
+  height: 120px;
+  background: var(--ember);
+  display: inline-block;
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Terminal frame — the signature chrome
+ * ──────────────────────────────────────────────────────────────── */
+.terminal-frame {
+  position: relative;
+  background: var(--ink);
+  border: 1px solid var(--smoke);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--cream);
+}
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  background: var(--ash);
+  padding: 0 12px;
+  position: relative;
+}
+.terminal-traffic {
+  display: flex;
+  gap: 8px;
+}
+.terminal-traffic > i {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  display: block;
+}
+.terminal-traffic > i:nth-child(1) { background: var(--tl-red); }
+.terminal-traffic > i:nth-child(2) { background: var(--tl-amber); }
+.terminal-traffic > i:nth-child(3) { background: var(--tl-green); }
+
+.terminal-tab {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--mute);
+}
+
+.terminal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.6;
+}
+
+.terminal-statusbar {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  background: var(--ash);
+  padding: 0 24px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--mute);
+}
+
+/* ASCII avatar tile */
+.ascii-avatar {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+  height: 140px;
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.4em;
+  color: var(--cream);
+  line-height: 1;
+}
+.ascii-avatar.sm {
+  width: 40px; height: 40px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}

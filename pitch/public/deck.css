@@ -1,0 +1,876 @@
+/* ────────────────────────────────────────────────────────────
+ * Han · pitch deck styles
+ * 1920 × 1080. Build on colors_and_type.css tokens.
+ * ──────────────────────────────────────────────────────────── */
+
+deck-stage {
+  --slide-w: 1920px;
+  --slide-h: 1080px;
+  background: #050505;
+}
+
+section.slide {
+  width: 1920px;
+  height: 1080px;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  position: relative;
+  overflow: hidden;
+  padding: 88px 120px 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header strip: eyebrow + section title (top) */
+.slide-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 48px;
+}
+.slide-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+.slide-eyebrow::before { content: "/ "; }
+.slide-eyebrow-mute { color: var(--mute); letter-spacing: 0.18em; font-size: 18px; }
+
+/* Footer strip (bottom) */
+.slide-foot {
+  position: absolute;
+  left: 120px;
+  right: 120px;
+  bottom: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--mute);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+.slide-foot .brand-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--cream);
+  font-weight: 700;
+}
+.slide-foot .brand-mark::before {
+  content: "";
+  display: inline-block;
+  width: 14px; height: 24px;
+  background: var(--ember);
+  transform: translateY(4px);
+}
+
+/* Type scale within slides */
+.s-display {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 124px;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+.s-h1 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 84px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+}
+.s-h2 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.1;
+  color: var(--cream);
+}
+.s-h3 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.2;
+  color: var(--cream);
+}
+.s-body {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 1.55;
+  color: var(--cream);
+}
+.s-body-lg {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  line-height: 1.5;
+  color: var(--cream);
+}
+.s-meta {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--mute);
+  line-height: 1.5;
+}
+.s-mono-sm {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--mute);
+  letter-spacing: 0.02em;
+}
+
+.t-strike {
+  text-decoration: line-through;
+  text-decoration-color: var(--mute);
+  color: var(--mute);
+}
+
+/* ── Slide 01: Title ─────────────────────────────────────── */
+.title-stage {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 48px;
+}
+.title-mark {
+  align-self: center;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.title-mark .wordmark {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 360px;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  color: var(--cream);
+}
+.title-mark .blockcursor {
+  width: 64px; height: 220px;
+  background: var(--ember);
+  align-self: flex-end;
+  margin-bottom: 32px;
+  animation: title-blink 1.2s steps(1, end) infinite;
+}
+@keyframes title-blink { 0%, 65% { opacity: 1; } 66%, 100% { opacity: 0; } }
+
+.title-lower {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 80px;
+  padding-bottom: 12px;
+}
+.title-tagline {
+  font-family: var(--font-mono);
+  font-size: 42px;
+  line-height: 1.25;
+  color: var(--cream);
+  max-width: 1100px;
+}
+.title-tagline .accent { color: var(--ember); }
+.title-meta {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--mute);
+  text-align: right;
+  letter-spacing: 0.04em;
+}
+.title-meta .k { color: var(--cream); }
+
+/* ── Slide 02: Problem ───────────────────────────────────── */
+.problem-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.alt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.alt-row {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: baseline;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--smoke);
+}
+.alt-row:last-child { border-bottom: 0; }
+.alt-row .alt-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--cream);
+}
+.alt-row .alt-fail {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--mute);
+  line-height: 1.5;
+}
+
+/* terminal-frame visual for problem slide */
+.tf {
+  background: var(--ink);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+}
+.tf-bar {
+  height: 44px;
+  background: var(--ash);
+  display: flex; align-items: center; padding: 0 16px; position: relative;
+}
+.tf-traffic { display: flex; gap: 10px; }
+.tf-traffic > i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+.tf-traffic > i:nth-child(1) { background: var(--tl-red); }
+.tf-traffic > i:nth-child(2) { background: var(--tl-amber); }
+.tf-traffic > i:nth-child(3) { background: var(--tl-green); }
+.tf-tab {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-size: 16px; letter-spacing: 0.04em; color: var(--mute);
+}
+.tf-body {
+  padding: 28px 32px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1.6;
+  color: var(--cream);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tf-statusbar {
+  height: 40px;
+  background: var(--ash);
+  display: flex; align-items: center; padding: 0 28px;
+  font-size: 16px; color: var(--mute);
+  letter-spacing: 0.02em;
+}
+
+/* ── Slide 03: Insight ───────────────────────────────────── */
+.insight-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.event-track {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+.event-card {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  min-height: 230px;
+  position: relative;
+}
+.event-card .ev-kind {
+  font-size: 16px; letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+.event-card .ev-payload {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.45;
+  flex: 1;
+}
+.event-card .ev-meta {
+  font-size: 14px;
+  color: var(--mute);
+  letter-spacing: 0.04em;
+}
+.event-track .ev-arrow {
+  position: absolute;
+  right: -22px; top: 50%; transform: translateY(-50%);
+  color: var(--mute); font-size: 28px;
+  z-index: 2;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 24px;
+}
+.compare .cmp {
+  border: 1px solid var(--smoke);
+  border-radius: 8px;
+  padding: 28px 32px;
+  background: var(--ash);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.compare .cmp .cmp-head {
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.compare .cmp .cmp-text {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.5;
+}
+.compare .cmp.them .cmp-text { color: var(--mute); }
+.compare .cmp.us { border-color: var(--ember); }
+.compare .cmp.us .cmp-head { color: var(--ember); }
+
+/* ── Slide 04: Solution / pillars ────────────────────────── */
+.pillars {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  align-items: stretch;
+}
+.pillar {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 40px 36px 36px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.pillar .p-num {
+  font-family: var(--font-mono);
+  font-size: 16px; letter-spacing: 0.2em;
+  color: var(--ember);
+}
+.pillar .p-head {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.0;
+  color: var(--cream);
+}
+.pillar .p-sub {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--mute);
+  line-height: 1.5;
+}
+.pillar .p-divider {
+  height: 1px; background: var(--smoke);
+}
+.pillar .p-detail {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  color: var(--cream);
+  line-height: 1.55;
+}
+.pillar .p-detail span.dim { color: var(--mute); }
+
+/* ── Slide 05: Product screens ───────────────────────────── */
+.screens-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 36px;
+}
+.screen-cell {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.screen-cell .cell-label {
+  font-size: 16px; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+.screen-cell .cell-sub {
+  font-size: 17px;
+  color: var(--mute);
+}
+.screen-frame {
+  flex: 1;
+  background: var(--ink);
+  border: 1px solid var(--smoke);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.screen-frame .sf-bar {
+  height: 36px;
+  background: var(--ash);
+  display: flex; align-items: center; padding: 0 12px; position: relative;
+  flex-shrink: 0;
+}
+.screen-frame .sf-bar .sf-traffic { display: flex; gap: 6px; }
+.screen-frame .sf-bar .sf-traffic > i { width: 10px; height: 10px; border-radius: 50%; }
+.screen-frame .sf-bar .sf-traffic > i:nth-child(1) { background: var(--tl-red); }
+.screen-frame .sf-bar .sf-traffic > i:nth-child(2) { background: var(--tl-amber); }
+.screen-frame .sf-bar .sf-traffic > i:nth-child(3) { background: var(--tl-green); }
+.screen-frame .sf-bar .sf-tab {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-size: 13px; color: var(--mute);
+}
+.screen-frame .sf-body {
+  flex: 1;
+  padding: 18px 20px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--cream);
+  display: flex; flex-direction: column; gap: 4px;
+  overflow: hidden;
+}
+.screen-frame .sf-status {
+  height: 28px;
+  background: var(--ash);
+  display: flex; align-items: center; padding: 0 16px;
+  font-size: 12px; color: var(--mute);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.screen-frame .sf-status .ok { color: var(--mint); }
+.screen-frame .sf-status .te { color: var(--teal); }
+.screen-frame .sf-status .em { color: var(--ember); }
+
+.sf-row { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: baseline; }
+.sf-row .sf-prompt { color: var(--ember); }
+.c-mute { color: var(--mute); }
+.c-mute-2 { color: var(--mute-2); }
+.c-cream { color: var(--cream); }
+.c-ember { color: var(--ember); }
+.c-teal { color: var(--teal); }
+.c-amber { color: var(--amber); }
+.c-mint { color: var(--mint); }
+.b { font-weight: 700; }
+
+/* mini blink cursor */
+.mc {
+  display: inline-block; width: 8px; height: 14px; background: var(--cream);
+  vertical-align: -2px; margin-left: 2px;
+  animation: title-blink 1.06s steps(1, end) infinite;
+}
+
+/* viewer split inside cell */
+.sf-split {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+  flex: 1;
+  gap: 0;
+  overflow: hidden;
+}
+.sf-split .sp-l, .sf-split .sp-r {
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--cream);
+  overflow: hidden;
+}
+.sf-split .sp-r { padding-left: 20px; }
+.sf-split .sp-div { background: var(--smoke); }
+
+/* ── Slide 06: Architecture ──────────────────────────────── */
+.arch-stage { flex: 1; display: flex; flex-direction: column; gap: 36px; }
+.arch-flow {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr 60px 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+.arch-node {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 8px;
+  padding: 32px 28px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.arch-node .an-tag {
+  font-size: 14px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+.arch-node .an-title {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 28px; color: var(--cream);
+}
+.arch-node .an-list {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--mute);
+  line-height: 1.6;
+}
+.arch-arrow {
+  align-self: center;
+  font-family: var(--font-mono);
+  color: var(--mute);
+  font-size: 22px;
+  text-align: center;
+}
+.arch-arrow span {
+  display: block;
+  font-size: 13px;
+  color: var(--mute-2);
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+
+.arch-rails {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 32px;
+}
+.arch-rail {
+  border: 1px solid var(--smoke);
+  border-radius: 8px;
+  padding: 24px 28px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.arch-rail .ar-tag {
+  font-size: 13px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--teal);
+}
+.arch-rail .ar-title {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 22px; color: var(--cream);
+}
+.arch-rail .ar-detail {
+  font-family: var(--font-mono); font-size: 17px;
+  color: var(--mute); line-height: 1.5;
+}
+
+/* ── Slide 07: Why Solana ─────────────────────────────────── */
+.solana-stage { flex: 1; display: grid; grid-template-columns: 1.05fr 1fr; gap: 80px; }
+.solana-left { display: flex; flex-direction: column; gap: 28px; }
+.fee-card {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 26px 36px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.fee-card .fc-head {
+  font-size: 14px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ember);
+}
+.fee-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--smoke);
+  font-family: var(--font-mono);
+}
+.fee-row:last-child { border-bottom: 0; }
+.fee-row .fr-label {
+  font-size: 20px; color: var(--cream);
+}
+.fee-row .fr-label .fr-sub {
+  display: block; font-size: 15px; color: var(--mute); margin-top: 4px;
+}
+.fee-row .fr-val {
+  font-size: 26px; color: var(--cream); font-weight: 700;
+}
+.fee-row .fr-val.acc { color: var(--mint); }
+
+.legs {
+  background: var(--ink);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 24px 32px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.legs .lg-head {
+  font-size: 14px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ember);
+}
+.legs .lg-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 100px;
+  align-items: baseline;
+  gap: 16px;
+  font-family: var(--font-mono);
+}
+.legs .lg-row .lg-i { color: var(--mute); font-size: 15px; }
+.legs .lg-row .lg-l { color: var(--cream); font-size: 22px; }
+.legs .lg-row .lg-l .lg-sub { display: block; color: var(--mute); font-size: 15px; margin-top: 2px; }
+.legs .lg-row .lg-v {
+  text-align: right; font-size: 22px; color: var(--cream); font-weight: 700;
+}
+.legs .lg-row .lg-v.amber { color: var(--amber); }
+.legs .lg-row .lg-v.teal { color: var(--teal); }
+.legs .lg-rule { height: 1px; background: var(--smoke); }
+
+.path-rows {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.path-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 24px;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--smoke);
+}
+.path-row:last-child { border-bottom: 0; }
+.path-row .pr-v {
+  font-weight: 700; font-size: 22px; color: var(--ember);
+  letter-spacing: 0.04em;
+}
+.path-row .pr-l {
+  font-size: 20px; color: var(--cream); line-height: 1.5;
+}
+.path-row .pr-l .pr-sub {
+  display: block; color: var(--mute); font-size: 16px; margin-top: 4px;
+}
+
+/* ── Slide 08: Market ────────────────────────────────────── */
+.market-grid { flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 80px; align-items: start; }
+.market-stats { display: flex; flex-direction: column; gap: 18px; }
+.stat {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 22px 30px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.stat .st-num {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 60px; line-height: 1.0;
+  color: var(--cream); letter-spacing: -0.02em;
+}
+.stat .st-num .em { color: var(--ember); }
+.stat .st-label {
+  font-family: var(--font-mono); font-size: 20px;
+  color: var(--mute); line-height: 1.4;
+}
+
+.cohort-list {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.cohort {
+  display: grid; grid-template-columns: 60px 1fr;
+  gap: 24px; align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--smoke);
+}
+.cohort:last-child { border-bottom: 0; }
+.cohort .co-num { font-family: var(--font-mono); font-size: 22px; color: var(--ember); font-weight: 700; }
+.cohort .co-name { font-family: var(--font-mono); font-size: 26px; color: var(--cream); font-weight: 700; }
+.cohort .co-sub { font-family: var(--font-mono); font-size: 18px; color: var(--mute); line-height: 1.5; margin-top: 4px; }
+
+/* ── Slide 09: Traction ──────────────────────────────────── */
+.traction-stage { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: stretch; }
+.traction-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-content: start; }
+.t-stat {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 28px 32px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.t-stat .ts-num {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 64px; color: var(--cream); line-height: 1.0;
+}
+.t-stat .ts-num .em { color: var(--ember); }
+.t-stat .ts-label { font-family: var(--font-mono); font-size: 18px; color: var(--mute); line-height: 1.4; }
+
+.traction-feed {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 28px 32px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.traction-feed .tf-head {
+  font-size: 14px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ember);
+}
+.traction-feed .tf-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--smoke);
+  font-family: var(--font-mono);
+}
+.traction-feed .tf-row:last-child { border-bottom: 0; }
+.traction-feed .tf-row .tf-k {
+  font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--teal);
+}
+.traction-feed .tf-row .tf-v {
+  font-size: 19px; color: var(--cream); line-height: 1.5;
+}
+.traction-feed .tf-row .tf-v .dim { color: var(--mute); }
+.mono-hex { color: var(--mute); font-family: var(--font-mono); font-size: 15px; word-break: break-all; }
+
+/* ── Slide 10: Roadmap ───────────────────────────────────── */
+.roadmap-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  align-items: stretch;
+}
+.rm-col {
+  display: flex; flex-direction: column; gap: 18px;
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 32px 28px;
+  background: var(--ash);
+}
+.rm-col.now { border-color: var(--ember); }
+.rm-col .rm-v {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 56px; color: var(--cream); line-height: 1.0;
+  letter-spacing: -0.01em;
+}
+.rm-col.now .rm-v { color: var(--ember); }
+.rm-col .rm-when {
+  font-family: var(--font-mono);
+  font-size: 14px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--mute);
+}
+.rm-col.now .rm-when { color: var(--ember); }
+.rm-col .rm-title {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 22px; color: var(--cream);
+  line-height: 1.3;
+}
+.rm-col .rm-rule { height: 1px; background: var(--smoke); }
+.rm-col .rm-items {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--mute);
+  line-height: 1.6;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.rm-col .rm-items .rm-item::before { content: "→ "; color: var(--mute-2); }
+
+/* ── Slide 11: Team ──────────────────────────────────────── */
+.team-stage { flex: 1; display: grid; grid-template-columns: 0.9fr 1.2fr; gap: 80px; align-items: start; }
+.team-card {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 44px 48px;
+  display: flex; flex-direction: column; gap: 26px;
+}
+.team-card .tc-ascii {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 80px; letter-spacing: 0.2em;
+  color: var(--cream); line-height: 1.0;
+}
+.team-card .tc-name {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 44px; color: var(--cream);
+}
+.team-card .tc-role {
+  font-family: var(--font-mono); font-size: 22px;
+  color: var(--mute); letter-spacing: 0.04em;
+}
+.team-card .tc-handles {
+  font-family: var(--font-mono); font-size: 19px;
+  color: var(--cream); line-height: 1.8;
+}
+.team-card .tc-handles .k { color: var(--mute); }
+
+.subagents { display: flex; flex-direction: column; gap: 18px; }
+.subagents .sa-head {
+  font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ember);
+}
+.subagents .sa-title {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 32px; color: var(--cream); line-height: 1.25;
+}
+.subagents .sa-sub {
+  font-family: var(--font-mono); font-size: 19px;
+  color: var(--mute); line-height: 1.5;
+}
+.sa-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.sa-grid .sa-pill {
+  border: 1px solid var(--smoke);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--cream);
+  display: flex; align-items: center; gap: 10px;
+}
+.sa-grid .sa-pill::before {
+  content: "▮"; color: var(--ember); font-size: 13px;
+}
+
+/* ── Slide 12: Ask ───────────────────────────────────────── */
+.ask-stage { flex: 1; display: flex; flex-direction: column; gap: 48px; }
+.ask-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+.ask-card {
+  background: var(--ash);
+  border: 1px solid var(--smoke);
+  border-radius: 12px;
+  padding: 40px 36px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+.ask-card.priority { border-color: var(--ember); }
+.ask-card .ak-num {
+  font-family: var(--font-mono); font-size: 14px;
+  letter-spacing: 0.2em; color: var(--mute); text-transform: uppercase;
+}
+.ask-card.priority .ak-num { color: var(--ember); }
+.ask-card .ak-head {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 38px; color: var(--cream); line-height: 1.1;
+}
+.ask-card .ak-rule { height: 1px; background: var(--smoke); }
+.ask-card .ak-body {
+  font-family: var(--font-mono); font-size: 20px;
+  color: var(--mute); line-height: 1.55;
+}
+.ask-card .ak-body .em { color: var(--cream); }
+
+.ask-foot-bar {
+  display: grid; grid-template-columns: 1fr auto; gap: 80px; align-items: end;
+  padding-top: 32px; border-top: 1px solid var(--smoke);
+}
+.ask-foot-bar .afb-cta {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 38px; color: var(--cream); line-height: 1.25;
+}
+.ask-foot-bar .afb-cta .em { color: var(--ember); }
+.ask-foot-bar .afb-meta {
+  font-family: var(--font-mono); font-size: 20px;
+  color: var(--mute); line-height: 1.6; text-align: right;
+}
+.ask-foot-bar .afb-meta .k { color: var(--cream); }
+
+/* utility */
+.ember-rule {
+  width: 60px; height: 4px; background: var(--ember);
+  display: block;
+}

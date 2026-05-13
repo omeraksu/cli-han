@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>han · pitch deck · Solana Colosseum</title>
+  <link rel="stylesheet" href="colors_and_type.css"/>
+  <link rel="stylesheet" href="deck.css"/>
+</head>
+<body>
+<deck-stage>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 01 · TITLE
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="01 Title">
+  <div class="slide-head">
+    <div class="slide-eyebrow">han</div>
+    <div class="slide-eyebrow-mute">Solana Colosseum · Frontier · 2026</div>
+  </div>
+
+  <div class="title-stage">
+    <div class="title-mark">
+      <span class="wordmark">han</span>
+      <span class="blockcursor"></span>
+    </div>
+
+    <div class="title-lower">
+      <div class="title-tagline">
+        A <span class="accent">terminal-native streaming network</span><br/>
+        for AI-assisted coding. Built on Solana.
+      </div>
+      <div class="title-meta">
+        <div><span class="k">ÖMER AKSU</span> · solo builder</div>
+        <div>github.com/omeraksu/cli-han</div>
+        <div>devnet live · MCP integrated</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>01 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 02 · PROBLEM
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="02 Problem">
+  <div class="slide-head">
+    <div class="slide-eyebrow">02 · problem</div>
+    <div class="slide-eyebrow-mute">ai coding is a solo sport — and existing platforms can't fix it</div>
+  </div>
+
+  <div class="problem-grid">
+    <div>
+      <div class="s-h1" style="margin-bottom: 28px;">
+        Developers ship hours a day<br/>
+        with <span style="color: var(--ember);">Claude Code, Cursor,</span><br/>
+        <span style="color: var(--ember);">Aider, Codex CLI</span> —
+      </div>
+      <div class="s-body-lg" style="color: var(--mute);">
+        — and have nowhere to <span style="color: var(--cream);">broadcast, watch,</span>
+        or <span style="color: var(--cream);">earn</span> from that work.
+      </div>
+
+      <div style="margin-top: 40px;">
+        <div class="slide-eyebrow" style="font-size: 16px; margin-bottom: 24px;">existing options</div>
+        <div class="alt-list">
+          <div class="alt-row">
+            <div class="alt-name">Twitch / YouTube</div>
+            <div class="alt-fail">Video pixels. 5–10 min ramp to follow. Structured AI work is lost.</div>
+          </div>
+          <div class="alt-row">
+            <div class="alt-name">Discord screen share</div>
+            <div class="alt-fail">Ephemeral. No lobby, no monetization, no community fabric.</div>
+          </div>
+          <div class="alt-row">
+            <div class="alt-name">Copilot Workspace · PRs</div>
+            <div class="alt-fail">Async only. Viewers can't watch, react, or tip in the moment.</div>
+          </div>
+          <div class="alt-row">
+            <div class="alt-name">Solana streaming dApps</div>
+            <div class="alt-fail">Token-centric, video-based. None built for terminal-native AI workflows.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      <div class="tf">
+        <div class="tf-bar">
+          <div class="tf-traffic"><i></i><i></i><i></i></div>
+          <div class="tf-tab">~/your-project · alone</div>
+        </div>
+        <div class="tf-body" style="min-height: 320px;">
+          <div><span class="c-ember">$</span> claude "refactor the tip handler so the fee leg is verifiable"</div>
+          <div class="c-mute">  ↳ reading 3 files…</div>
+          <div class="c-mute">  ↳ planning 4 edits…</div>
+          <div>  <span class="c-amber">✎ tip-handler.ts</span> <span class="c-mute">  +24 / -11</span></div>
+          <div>  <span class="c-amber">✎ tests/tip.test.ts</span> <span class="c-mute">  +18 / -2</span></div>
+          <div>  <span class="c-mint">✓ 14/14 tests pass</span></div>
+          <div style="margin-top: 18px;" class="c-mute-2">— and nobody saw it.</div>
+          <div style="margin-top: 18px;" class="c-mute">no audience · no chat · no tip · no replay</div>
+          <div><span class="c-cream">$</span><span class="mc"></span></div>
+        </div>
+        <div class="tf-statusbar">
+          <span>viewers: 0</span>
+          <span style="margin-left: 24px;">tips: 0 SOL</span>
+          <span style="margin-left: 24px;">⌃c quit</span>
+        </div>
+      </div>
+
+      <div class="s-meta" style="text-align: center;">↑ today, every AI coding session looks like this.</div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>02 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 03 · INSIGHT
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="03 Insight">
+  <div class="slide-head">
+    <div class="slide-eyebrow">03 · insight</div>
+    <div class="slide-eyebrow-mute">a terminal session is already a stream</div>
+  </div>
+
+  <div class="insight-stage">
+    <div>
+      <div class="s-h1">
+        We stream the <span style="color: var(--ember);">events</span>,<br/>
+        not the pixels.
+      </div>
+      <div class="s-body-lg" style="margin-top: 28px; color: var(--mute);">
+        Every AI coding turn is structured. Each event is a queryable,
+        replayable, <span style="color: var(--cream);">tippable</span> unit.
+      </div>
+    </div>
+
+    <div class="event-track">
+      <div class="event-card">
+        <div class="ev-kind">turn</div>
+        <div class="ev-payload">"refactor the tip handler"</div>
+        <div class="ev-meta">user · 14:02:11</div>
+      </div>
+      <div class="event-card">
+        <div class="ev-kind">tool_call</div>
+        <div class="ev-payload">read_file<br/><span style="color: var(--mute); font-size: 17px;">tip-handler.ts</span></div>
+        <div class="ev-meta">claude · 14:02:13</div>
+      </div>
+      <div class="event-card">
+        <div class="ev-kind">file_edit</div>
+        <div class="ev-payload"><span style="color: var(--amber);">tip-handler.ts</span><br/><span style="color: var(--mute); font-size: 17px;">+24 / -11</span></div>
+        <div class="ev-meta">claude · 14:02:18</div>
+      </div>
+      <div class="event-card">
+        <div class="ev-kind">test_run</div>
+        <div class="ev-payload"><span style="color: var(--mint);">14/14 pass</span><br/><span style="color: var(--mute); font-size: 17px;">1.2s</span></div>
+        <div class="ev-meta">jest · 14:02:24</div>
+      </div>
+      <div class="event-card">
+        <div class="ev-kind">tip</div>
+        <div class="ev-payload"><span style="color: var(--ember); font-weight: 700;">0.05 SOL</span><br/><span style="color: var(--mute); font-size: 17px;">from @kerem</span></div>
+        <div class="ev-meta">viewer · 14:02:27</div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="cmp them">
+        <div class="cmp-head">Twitch · video</div>
+        <div class="cmp-text">opaque pixels · no structure · no replay granularity · no machine readers</div>
+      </div>
+      <div class="cmp us">
+        <div class="cmp-head">han · events</div>
+        <div class="cmp-text">structured feed · raw terminal optional · agents are first-class viewers · every event has a price</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>03 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 04 · SOLUTION · PILLARS
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="04 Solution">
+  <div class="slide-head">
+    <div class="slide-eyebrow">04 · what we built</div>
+    <div class="slide-eyebrow-mute">han · three pillars</div>
+  </div>
+
+  <div style="margin-bottom: 56px;">
+    <div class="s-h1">
+      A streaming network<br/>
+      shaped like the <span style="color: var(--ember);">terminal</span>.
+    </div>
+  </div>
+
+  <div class="pillars">
+    <div class="pillar">
+      <div class="p-num">▮ 01</div>
+      <div class="p-head">stream</div>
+      <div class="p-sub">Broadcast a coding session in 30 seconds. One CLI command.</div>
+      <div class="p-divider"></div>
+      <div class="p-detail">
+        Structured event feed by default<br/>
+        <span class="dim">(turn / tool_call / file_edit / test).</span><br/>
+        Raw terminal optional.<br/>
+        Fixed 120×30 broadcast grid.
+      </div>
+    </div>
+
+    <div class="pillar">
+      <div class="p-num">▮ 02</div>
+      <div class="p-head">tip</div>
+      <div class="p-sub">Viewers pay broadcasters live, in SOL. Sub-cent fees, seconds to settle.</div>
+      <div class="p-divider"></div>
+      <div class="p-detail">
+        2× SystemProgram::transfer<br/>
+        per tip<span class="dim"> — broadcaster + protocol.</span><br/>
+        3% protocol fee, verified on-chain.<br/>
+        0.005 – 0.05 SOL typical range.
+      </div>
+    </div>
+
+    <div class="pillar">
+      <div class="p-num">▮ 03</div>
+      <div class="p-head">agents</div>
+      <div class="p-sub">Agents are citizens, not bots. Broadcaster or viewer — either can be one.</div>
+      <div class="p-divider"></div>
+      <div class="p-detail">
+        V1 — streamer-side agent integration<br/>
+        <span class="dim">via MCP server (6 tools live).</span><br/>
+        V1.5 — hub-side summarizer + moderator.<br/>
+        <span class="dim">V2 — on-chain agent identity (PDA).</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>04 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 05 · PRODUCT SCREENS
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="05 Product">
+  <div class="slide-head">
+    <div class="slide-eyebrow">05 · product</div>
+    <div class="slide-eyebrow-mute">cli-han · live on devnet</div>
+  </div>
+
+  <div class="screens-grid">
+
+    <!-- screen 1 · profile setup -->
+    <div class="screen-cell">
+      <div class="cell-label">01 · setup</div>
+      <div class="cell-sub">one CLI command. claim your handle, sign with wallet.</div>
+      <div class="screen-frame">
+        <div class="sf-bar">
+          <div class="sf-traffic"><i></i><i></i><i></i></div>
+          <div class="sf-tab">han · onboarding</div>
+        </div>
+        <div class="sf-body">
+          <div class="c-mute">han v0.4 · pick a handle</div>
+          <div style="margin-top: 8px;">
+            <span class="c-mute">handle</span>
+            <span class="c-ember"> ▸ </span>
+            <span class="b">omeraksu</span><span class="mc"></span>
+          </div>
+          <div style="display: flex; gap: 14px; margin-top: 14px;">
+            <div style="width: 80px; height: 80px; background: var(--ash); border: 1px solid var(--smoke); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span class="c-cream b" style="font-size: 28px; letter-spacing: 0.2em;">[░]</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+              <div class="c-cream b">handle: omeraksu</div>
+              <div class="c-mute" style="font-size: 14px;">wallet: 7zS3...kPq · devnet</div>
+              <div class="c-teal" style="font-size: 14px;">bio: shipping han.</div>
+            </div>
+          </div>
+          <div style="margin-top: 18px;"><span class="c-teal b">[enter]</span> <span class="c-mute">claim · sign with wallet</span></div>
+        </div>
+        <div class="sf-status">
+          <span class="te">▸ ready</span>
+          <span style="margin-left: auto;">⏎ enter · ⌃c quit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- screen 2 · stream live -->
+    <div class="screen-cell">
+      <div class="cell-label">02 · stream · live</div>
+      <div class="cell-sub">broadcaster view. structured feed + tip notifications inline.</div>
+      <div class="screen-frame">
+        <div class="sf-bar">
+          <div class="sf-traffic"><i></i><i></i><i></i></div>
+          <div class="sf-tab">han · live · omeraksu</div>
+        </div>
+        <div class="sf-body">
+          <div><span class="c-mute">14:02:11</span> <span class="c-ember">turn</span>  refactor the tip handler</div>
+          <div><span class="c-mute">14:02:13</span> <span class="c-teal">tool</span>  read_file <span class="c-mute">tip-handler.ts</span></div>
+          <div><span class="c-mute">14:02:18</span> <span class="c-amber">edit</span>  tip-handler.ts <span class="c-mute">+24 / -11</span></div>
+          <div><span class="c-mute">14:02:24</span> <span class="c-mint">test</span>  <span class="c-mint">14/14 pass</span> <span class="c-mute">· 1.2s</span></div>
+          <div style="margin-top: 6px;"><span class="c-mute">14:02:27</span> <span class="c-ember b">tip </span><span class="c-ember b">+0.05 SOL</span> <span class="c-mute">from @kerem · "ship it"</span></div>
+          <div><span class="c-mute">14:02:31</span> <span class="c-teal">chat</span> <span class="c-mute">@bob:</span> try cpi here</div>
+          <div style="margin-top: 6px;"><span class="c-ember">$</span><span class="mc"></span></div>
+        </div>
+        <div class="sf-status">
+          <span class="em b">● LIVE</span>
+          <span style="margin-left: 18px;">viewers: <span class="c-cream b">7</span></span>
+          <span style="margin-left: 18px;">tips: <span class="ok">0.12 SOL</span></span>
+          <span style="margin-left: auto;">⌃t tip · ⌃q quit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- screen 3 · browse -->
+    <div class="screen-cell">
+      <div class="cell-label">03 · browse · lobby</div>
+      <div class="cell-sub">who's live right now. one keystroke to connect.</div>
+      <div class="screen-frame">
+        <div class="sf-bar">
+          <div class="sf-traffic"><i></i><i></i><i></i></div>
+          <div class="sf-tab">han · lobby</div>
+        </div>
+        <div class="sf-body" style="gap: 6px;">
+          <div class="c-mute">15 broadcasters live · sort by tips</div>
+          <div style="height: 1px; background: var(--smoke); margin: 6px 0;"></div>
+          <div style="display: grid; grid-template-columns: 110px 1fr auto auto; gap: 14px;">
+            <span class="c-cream b">@alice</span>
+            <span class="c-mute">building anchor escrow for han</span>
+            <span class="c-mute">12 v</span>
+            <span class="c-amber">0.84 SOL</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px 1fr auto auto; gap: 14px;">
+            <span class="c-cream b">@bob</span>
+            <span class="c-mute">refactor: ws → reliable pubsub</span>
+            <span class="c-mute">7 v</span>
+            <span class="c-amber">0.31 SOL</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px 1fr auto auto; gap: 14px;">
+            <span class="c-cream b">@kerem</span>
+            <span class="c-mute">pong, but on-chain (anchor)</span>
+            <span class="c-mute">5 v</span>
+            <span class="c-amber">0.18 SOL</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px 1fr auto auto; gap: 14px;">
+            <span class="c-cream b">@zeynep</span>
+            <span class="c-mute">indexer · helius webhooks</span>
+            <span class="c-mute">3 v</span>
+            <span class="c-amber">0.09 SOL</span>
+          </div>
+        </div>
+        <div class="sf-status">
+          <span class="te">▸ select</span>
+          <span style="margin-left: 18px;">↑↓ move · ⏎ connect</span>
+          <span style="margin-left: auto;">⌃r refresh</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- screen 4 · viewer + tip -->
+    <div class="screen-cell">
+      <div class="cell-label">04 · viewer · alice</div>
+      <div class="cell-sub">split pane. event stream left, chat + tip right.</div>
+      <div class="screen-frame">
+        <div class="sf-bar">
+          <div class="sf-traffic"><i></i><i></i><i></i></div>
+          <div class="sf-tab">han · @alice</div>
+        </div>
+        <div class="sf-split">
+          <div class="sp-l">
+            <div class="c-mute">live · anchor escrow</div>
+            <div><span class="c-ember">turn</span> add refund path to escrow</div>
+            <div><span class="c-teal">tool</span> read <span class="c-mute">escrow.rs</span></div>
+            <div><span class="c-amber">edit</span> escrow.rs <span class="c-mute">+38 / -4</span></div>
+            <div><span class="c-mint">test</span> <span class="c-mint">19/19 pass</span></div>
+            <div><span class="c-ember b">tip</span> <span class="c-ember b">+0.05</span> <span class="c-mute">@you</span></div>
+          </div>
+          <div class="sp-div"></div>
+          <div class="sp-r">
+            <div class="c-mute">chat · 12 watching</div>
+            <div><span class="c-cream b">bob</span> <span class="c-mute">3m</span> try cpi here</div>
+            <div><span class="c-cream b">kerem</span> <span class="c-mute">1m</span> nice work 🔥</div>
+            <div><span class="c-cream b">you</span> <span class="c-mute">now</span> + 0.05 SOL</div>
+            <div style="margin-top: 8px;"><span class="c-ember">›</span> <span class="c-cream">type a message…</span><span class="mc"></span></div>
+          </div>
+        </div>
+        <div class="sf-status">
+          <span class="em b">● connected</span>
+          <span style="margin-left: 18px;">⌃t tip · ⌃g game · ⌃q leave</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>05 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 06 · ARCHITECTURE
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="06 Architecture">
+  <div class="slide-head">
+    <div class="slide-eyebrow">06 · how it works</div>
+    <div class="slide-eyebrow-mute">three runtimes · one event bus</div>
+  </div>
+
+  <div class="arch-stage">
+    <div class="s-h2">
+      One <span style="color: var(--ember);">SDK</span>. One <span style="color: var(--ember);">hub</span>. One <span style="color: var(--ember);">on-chain</span> tip path.
+    </div>
+
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="an-tag">broadcaster</div>
+        <div class="an-title">runtime · cli</div>
+        <div class="an-list">
+          Node + node-pty + ink<br/>
+          MCP server bridges Claude Code &amp; Cursor.<br/>
+          <span style="color: var(--mute-2);">Aider, Codex CLI via MCP protocol — 6 tools.</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→ ws<span>events</span></div>
+
+      <div class="arch-node">
+        <div class="an-tag">network</div>
+        <div class="an-title">hub</div>
+        <div class="an-list">
+          Fastify + WebSocket fan-out<br/>
+          Redis · Postgres<br/>
+          Structured event bus <span style="color: var(--mute-2);">(MCP → fan-out).</span><br/>
+          <span style="color: var(--mute-2);">V1.5: hub-side summarizer + moderator.</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→ ws<span>events + tips</span></div>
+
+      <div class="arch-node">
+        <div class="an-tag">viewer</div>
+        <div class="an-title">viewer · cli</div>
+        <div class="an-list">
+          Same CLI binary as broadcaster.<br/>
+          Browse · join · chat · tip · play.<br/>
+          Agents can subscribe identically.
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-rails">
+      <div class="arch-rail">
+        <div class="ar-tag">on-chain</div>
+        <div class="ar-title">tip · 2× transfer</div>
+        <div class="ar-detail">
+          SystemProgram::transfer<br/>
+          → broadcaster (net)<br/>
+          → protocol vault (3%)<br/>
+          Verified end-to-end on devnet.
+        </div>
+      </div>
+      <div class="arch-rail">
+        <div class="ar-tag">on-chain</div>
+        <div class="ar-title">escrow · anchor</div>
+        <div class="ar-detail">
+          Game escrow + refund paths.<br/>
+          Deployed devnet.<br/>
+          Runtime invoke in V1.5.
+        </div>
+      </div>
+      <div class="arch-rail">
+        <div class="ar-tag">developer</div>
+        <div class="ar-title">SDK · TypeScript</div>
+        <div class="ar-detail">
+          Same surface for human + agent.<br/>
+          stream_start · log · browse<br/>
+          connect · tip · subscribe.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>06 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 07 · WHY SOLANA
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="07 Why Solana">
+  <div class="slide-head">
+    <div class="slide-eyebrow">07 · why solana</div>
+    <div class="slide-eyebrow-mute">tipping = high-frequency micropayments</div>
+  </div>
+
+  <div class="solana-stage">
+    <div class="solana-left">
+      <div class="s-h2">
+        Cents-fee transfers,<br/>
+        seconds to settle,<br/>
+        <span style="color: var(--ember);">multi-leg in one TX</span>.
+      </div>
+
+      <div class="fee-card">
+        <div class="fc-head">tip economics · v1</div>
+        <div class="fee-row">
+          <div class="fr-label">Tip size <span class="fr-sub">typical range broadcaster ↔ viewer</span></div>
+          <div class="fr-val">0.005 – 0.05 SOL</div>
+        </div>
+        <div class="fee-row">
+          <div class="fr-label">Network fee <span class="fr-sub">mainnet, 2× transfer</span></div>
+          <div class="fr-val acc">&lt; $0.001</div>
+        </div>
+        <div class="fee-row">
+          <div class="fr-label">Confirmation <span class="fr-sub">doesn't break live feel</span></div>
+          <div class="fr-val">~5 seconds</div>
+        </div>
+        <div class="fee-row">
+          <div class="fr-label">Protocol fee <span class="fr-sub">verified on-chain</span></div>
+          <div class="fr-val" style="color: var(--ember);">3%</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 28px;">
+      <div class="legs">
+        <div class="lg-head">v2 · multi-leg tip expansion <span style="color: var(--mute); font-weight: 400;">(roadmap)</span></div>
+        <div class="lg-row">
+          <div class="lg-i">leg 1</div>
+          <div class="lg-l">broadcaster<span class="lg-sub">@alice · main payout</span></div>
+          <div class="lg-v">85%</div>
+        </div>
+        <div class="lg-rule"></div>
+        <div class="lg-row">
+          <div class="lg-i">leg 2</div>
+          <div class="lg-l">protocol<span class="lg-sub">treasury · sustainable fee</span></div>
+          <div class="lg-v">3%</div>
+        </div>
+        <div class="lg-rule"></div>
+        <div class="lg-row">
+          <div class="lg-i">leg 3</div>
+          <div class="lg-l">agent operator<span class="lg-sub">summarizer · referee in the room</span></div>
+          <div class="lg-v amber">7%</div>
+        </div>
+        <div class="lg-rule"></div>
+        <div class="lg-row">
+          <div class="lg-i">leg 4</div>
+          <div class="lg-l">referrer<span class="lg-sub">discovery rev-share</span></div>
+          <div class="lg-v teal">5%</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="slide-eyebrow" style="font-size: 16px; margin-bottom: 16px;">on-chain expansion path</div>
+        <div class="path-rows">
+          <div class="path-row">
+            <div class="pr-v">V1</div>
+            <div class="pr-l">Tipping live <span class="pr-sub">2× transfer + 3% fee · devnet verified</span></div>
+          </div>
+          <div class="path-row">
+            <div class="pr-v">V1.5</div>
+            <div class="pr-l">Game escrow runtime invoke <span class="pr-sub">Anchor program already deployed</span></div>
+          </div>
+          <div class="path-row">
+            <div class="pr-v">V2</div>
+            <div class="pr-l">Multi-leg tip · on-chain agent identity <span class="pr-sub">PDA per agent</span></div>
+          </div>
+          <div class="path-row">
+            <div class="pr-v">V3</div>
+            <div class="pr-l">SAS attestation · capability marketplace <span class="pr-sub">on-chain proof for agent actions and game outcomes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>07 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 08 · MARKET
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="08 Market">
+  <div class="slide-head">
+    <div class="slide-eyebrow">08 · market</div>
+    <div class="slide-eyebrow-mute">there is no twitch for the terminal</div>
+  </div>
+
+  <div class="market-grid">
+    <div class="market-stats">
+      <div class="s-h1" style="margin-bottom: 8px;">
+        AI-assisted coding is the<br/>
+        <span style="color: var(--ember);">new default</span>.
+      </div>
+      <div class="s-body" style="color: var(--mute); margin-bottom: 8px; font-size: 22px; line-height: 1.5;">
+        Tens of millions of developers now spend their day inside a terminal
+        with an AI agent. The fastest-growing devtool cohort, with no native social layer.
+      </div>
+
+      <div class="stat">
+        <div class="st-num"><span class="em">~28M</span> developers</div>
+        <div class="st-label">global, using AI coding assistants daily by 2026</div>
+      </div>
+      <div class="stat">
+        <div class="st-num"><span class="em">1M+</span> Cursor seats</div>
+        <div class="st-label">+ Claude Code, Aider, Codex CLI — terminal-first cohort growing fastest</div>
+      </div>
+      <div class="stat">
+        <div class="st-num"><span class="em">0</span> platforms</div>
+        <div class="st-label">built to broadcast, watch, or monetize that work in real time</div>
+      </div>
+      <div class="stat">
+        <div class="st-num"><span class="em">pre-beta</span></div>
+        <div class="st-label">invite-only cohort opens post-hackathon — beta access is part of our ask</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="slide-eyebrow" style="font-size: 16px; margin-bottom: 24px;">who han is for</div>
+      <div class="cohort-list">
+        <div class="cohort">
+          <div class="co-num">01</div>
+          <div>
+            <div class="co-name">Indie devs &amp; freelancers</div>
+            <div class="co-sub">solo builders shipping in public — han turns a working session into reach + revenue</div>
+          </div>
+        </div>
+        <div class="cohort">
+          <div class="co-num">02</div>
+          <div>
+            <div class="co-name">Hackathon teams</div>
+            <div class="co-sub">live broadcast the sprint to judges, sponsors, peers — replayable on-chain proof of work</div>
+          </div>
+        </div>
+        <div class="cohort">
+          <div class="co-num">03</div>
+          <div>
+            <div class="co-name">Instructor devs &amp; eng leads</div>
+            <div class="co-sub">"this is how I ship" — students &amp; teammates watch the real workflow, not a polished tutorial</div>
+          </div>
+        </div>
+        <div class="cohort">
+          <div class="co-num">04</div>
+          <div>
+            <div class="co-name">Agent operators</div>
+            <div class="co-sub">agent economy needs a common surface. han is the first place agents can broadcast + watch</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>08 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 09 · TRACTION
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="09 Traction">
+  <div class="slide-head">
+    <div class="slide-eyebrow">09 · traction</div>
+    <div class="slide-eyebrow-mute">two days · devnet live · MCP integrated</div>
+  </div>
+
+  <div style="margin-bottom: 40px;">
+    <div class="s-h1">
+      <span style="color: var(--ember);">Engineering velocity</span>,<br/>
+      <span style="color: var(--mute); font-weight: 400; font-size: 36px;">two days in. Beta cohort next.</span>
+    </div>
+  </div>
+
+  <div class="traction-stage">
+    <div class="traction-numbers">
+      <div class="t-stat">
+        <div class="ts-num"><span class="em">34</span></div>
+        <div class="ts-label">commits in 2 days · active solo build</div>
+      </div>
+      <div class="t-stat">
+        <div class="ts-num"><span class="em">11</span></div>
+        <div class="ts-label">specialised Claude-Code subagents driving velocity</div>
+      </div>
+      <div class="t-stat">
+        <div class="ts-num"><span class="em">6</span></div>
+        <div class="ts-label">MCP tools live — Claude Code &amp; Cursor integrated</div>
+      </div>
+      <div class="t-stat">
+        <div class="ts-num"><span class="em">100%</span></div>
+        <div class="ts-label">end-to-end tip flow verified on devnet</div>
+      </div>
+    </div>
+
+    <div class="traction-feed">
+      <div class="tf-head">what's live · devnet</div>
+      <div class="tf-row">
+        <div class="tf-k">anchor</div>
+        <div class="tf-v">
+          Program deployed · escrow + refund paths<br/>
+          <span class="mono-hex">D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD</span>
+        </div>
+      </div>
+      <div class="tf-row">
+        <div class="tf-k">tip flow</div>
+        <div class="tf-v">2× SystemProgram::transfer · 3% fee verified end-to-end</div>
+      </div>
+      <div class="tf-row">
+        <div class="tf-k">mcp</div>
+        <div class="tf-v">stream_start · stop · log · browse · connect · tip <span class="dim">— Claude Code &amp; Cursor</span></div>
+      </div>
+      <div class="tf-row">
+        <div class="tf-k">stack</div>
+        <div class="tf-v">hub: Fastify + ws + Redis + Postgres · runtime: Node + node-pty + ink · SDK: TypeScript</div>
+      </div>
+      <div class="tf-row">
+        <div class="tf-k">design</div>
+        <div class="tf-v">han-terminal-ui kit shipped · ANSI palette · 120×30 broadcast grid</div>
+      </div>
+      <div class="tf-row">
+        <div class="tf-k">status</div>
+        <div class="tf-v"><span style="color: var(--mint);">demo-ready</span> · known UX gaps · pre-beta · invite-only beta next</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>09 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 10 · ROADMAP
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="10 Roadmap">
+  <div class="slide-head">
+    <div class="slide-eyebrow">10 · roadmap</div>
+    <div class="slide-eyebrow-mute">four versions, one trajectory</div>
+  </div>
+
+  <div style="margin-bottom: 48px;">
+    <div class="s-h1">
+      From <span style="color: var(--ember);">tip primitive</span><br/>
+      to <span style="color: var(--ember);">agent economy</span>.
+    </div>
+  </div>
+
+  <div class="roadmap-grid">
+    <div class="rm-col now">
+      <div class="rm-v">V1</div>
+      <div class="rm-when">may 2026 · live on devnet</div>
+      <div class="rm-title">Tip primitive</div>
+      <div class="rm-rule"></div>
+      <div class="rm-items">
+        <div class="rm-item">Streaming + browse + viewer</div>
+        <div class="rm-item">2× transfer tip + 3% fee</div>
+        <div class="rm-item">MCP tools (6) live</div>
+        <div class="rm-item">Demo trio: profile, stream, tip</div>
+      </div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-v">V1.5</div>
+      <div class="rm-when">Q3 2026</div>
+      <div class="rm-title">Agentic foundation</div>
+      <div class="rm-rule"></div>
+      <div class="rm-items">
+        <div class="rm-item">SummarizerAgent</div>
+        <div class="rm-item">ModeratorAgent</div>
+        <div class="rm-item">Idle-gap mini-games</div>
+        <div class="rm-item">Escrow runtime invoke</div>
+      </div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-v">V2</div>
+      <div class="rm-when">Q4 2026 — Q1 2027</div>
+      <div class="rm-title">Multi-leg + agent identity</div>
+      <div class="rm-rule"></div>
+      <div class="rm-items">
+        <div class="rm-item">4-leg tip in one TX</div>
+        <div class="rm-item">On-chain agent identity (PDA)</div>
+        <div class="rm-item">Mainnet launch</div>
+        <div class="rm-item">Halborn audit complete</div>
+      </div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-v">V3</div>
+      <div class="rm-when">2027+</div>
+      <div class="rm-title">Agent marketplace</div>
+      <div class="rm-rule"></div>
+      <div class="rm-items">
+        <div class="rm-item">SAS attestation (actions + games)</div>
+        <div class="rm-item">Capability marketplace</div>
+        <div class="rm-item">Rev-share rails</div>
+        <div class="rm-item">SPL: USDC tip + subscriptions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>10 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 11 · TEAM
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="11 Team">
+  <div class="slide-head">
+    <div class="slide-eyebrow">11 · team</div>
+    <div class="slide-eyebrow-mute">one builder · eleven specialised subagents</div>
+  </div>
+
+  <div class="team-stage">
+    <div class="team-card">
+      <div class="tc-ascii">[░░]</div>
+      <div>
+        <div class="tc-name">Ömer Aksu</div>
+        <div class="tc-role">solo builder · founder</div>
+      </div>
+      <div style="height: 1px; background: var(--smoke);"></div>
+      <div class="tc-handles">
+        <div><span class="k">github</span>  · omeraksu/cli-han</div>
+        <div><span class="k">x</span>       · @omeraksu</div>
+        <div><span class="k">superteam</span> · Turkey</div>
+        <div><span class="k">status</span>  · 2 days in · shipping non-stop</div>
+      </div>
+    </div>
+
+    <div class="subagents">
+      <div class="sa-head">leverage</div>
+      <div class="sa-title">
+        A solo build doesn't mean a solo brain.<br/>
+        <span style="color: var(--mute); font-weight: 400; font-size: 28px;">
+          eleven specialised <span style="color: var(--cream);">Claude-Code subagents</span> own each surface.
+          34 commits in two days <span style="color: var(--mute-2);">— infra leverage, not a substitute for human team.</span>
+        </span>
+      </div>
+
+      <div class="sa-grid">
+        <div class="sa-pill">architect</div>
+        <div class="sa-pill">runtime</div>
+        <div class="sa-pill">hub</div>
+        <div class="sa-pill">summarizer</div>
+        <div class="sa-pill">game</div>
+        <div class="sa-pill">anchor</div>
+        <div class="sa-pill">solana-client</div>
+        <div class="sa-pill">qa</div>
+        <div class="sa-pill">debug</div>
+        <div class="sa-pill">demo-master</div>
+        <div class="sa-pill">ui-designer</div>
+        <div class="sa-pill" style="border-color: var(--ember); color: var(--ember);">+ you?</div>
+      </div>
+
+      <div class="sa-sub" style="margin-top: 18px;">
+        han is being built the way han is for: a developer + agents,
+        broadcasting structured work. We are our own first user.
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>11 / 12</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 12 · ASK
+════════════════════════════════════════════════════════════════ -->
+<section class="slide" data-screen-label="12 Ask">
+  <div class="slide-head">
+    <div class="slide-eyebrow">12 · ask</div>
+    <div class="slide-eyebrow-mute">why we're here</div>
+  </div>
+
+  <div class="ask-stage">
+    <div>
+      <div class="s-h1">
+        Security review, runway,<br/>
+        an <span style="color: var(--ember);">indie dev beta</span> cohort.
+      </div>
+    </div>
+
+    <div class="ask-grid">
+      <div class="ask-card priority">
+        <div class="ak-num">priority · 01</div>
+        <div class="ak-head">Halborn<br/>security review</div>
+        <div class="ak-rule"></div>
+        <div class="ak-body">
+          Anchor program audit ahead of <span class="em">V2 mainnet</span> —
+          multi-leg tip + game escrow. Direct access to the hackathon sponsor is
+          <span class="em">gold</span>.
+        </div>
+      </div>
+      <div class="ask-card">
+        <div class="ak-num">priority · 02</div>
+        <div class="ak-head">V1.5 sprint<br/>runway</div>
+        <div class="ak-rule"></div>
+        <div class="ak-body">
+          <span class="em">1 – 2 months</span> of solo runway to ship the
+          agentic foundation — SummarizerAgent, ModeratorAgent, escrow runtime invoke.
+        </div>
+      </div>
+      <div class="ask-card">
+        <div class="ak-num">priority · 03</div>
+        <div class="ak-head">Beta cohort<br/>+ grant follow-up</div>
+        <div class="ak-rule"></div>
+        <div class="ak-body">
+          <span class="em">50 – 100</span> indie devs from Superteam's network for
+          the first wave. Superteam Turkey grant follow-up at V2.
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 32px; padding: 24px 28px; border: 1px solid var(--smoke); border-radius: 6px;">
+      <div class="slide-eyebrow" style="font-size: 14px; margin-bottom: 12px;">risks we've named</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; font-size: 18px; color: var(--mute);">
+        <div><span class="c-cream">Cold-start</span> — solving with hackathon beta cohort + Superteam network</div>
+        <div><span class="c-cream">Agent moderation</span> — broadcaster policy override + V1.5 ModeratorAgent</div>
+        <div><span class="c-cream">Mainnet readiness</span> — Halborn audit before V2 launch</div>
+      </div>
+    </div>
+
+    <div class="ask-foot-bar">
+      <div class="afb-cta">
+        <span class="em">demo:</span> github.com/omeraksu/cli-han<br/>
+        <span style="color: var(--mute); font-weight: 400; font-size: 26px;">
+          devnet live · clone + <span style="color: var(--cream);">han stream</span> in 30 seconds.
+        </span>
+      </div>
+      <div class="afb-meta">
+        <div><span class="k">build</span>  ömer aksu</div>
+        <div><span class="k">contact</span> @omeraksu</div>
+        <div><span class="k">track</span>  Superteam Turkey · Halborn · Frontier</div>
+        <div><span class="k">submitted</span> may 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-foot">
+    <span class="brand-mark">han</span>
+    <span>12 / 12</span>
+  </div>
+</section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+</body>
+</html>
