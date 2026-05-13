@@ -1,68 +1,67 @@
-# Han, Claude Code Setup
+# han
 
-Han için tasarlanmış 11 subagent, 7 skill, 9 slash command, 2 hook, ve eşlik eden config dosyaları. Hepsi kopyala-yapıştır kullanıma hazır.
+**A terminal-native streaming network for AI-assisted coding. Built on Solana.**
 
-## Han nedir
+A developer running Claude Code, Cursor, Aider, or Codex CLI is already producing a *stream*. Han turns that stream into a first-class network event — structured (turn / tool_call / file_edit / test), shareable, replayable, **tippable**.
 
-Han, AI ile çalışan geliştiriciler için terminal-native ambient social layer. Yayıncı kendi tool'unu (Claude Code, Cursor, Codex CLI, Aider, vs.) çalıştırırken Han runtime PTY üstünden terminal output'unu yakalar, hub'a stream eder. İzleyiciler ham akışı veya AI özetli broadcast feed'i takip eder, kendi aralarında Pong veya Type-race oyunlar oynar, yayıncıya tip atar. Kazanan attestation Solana'ya yazılır.
+```
+[broadcaster · cli]  →  [han hub · ws + on-chain]  →  [viewer · cli]
+                                ↓
+                       on-chain tip · 3% protocol fee
+```
 
-Hackathon: Solana Frontier Hackathon submission.
+We stream the **events**, not the pixels.
 
-## 5 dakikada yayın aç
+- **Pitch deck:** https://pitch-ochre-alpha.vercel.app
+- **Devnet program:** [`D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD`](https://explorer.solana.com/address/D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD?cluster=devnet)
+- **Submission:** Superteam Turkey × Halborn · Solana Colosseum Frontier (May 2026)
+
+## What's live (V1, devnet)
+
+| Capability | How it works |
+|---|---|
+| **Structured activity feed** | MCP `han_log` events stream from the broadcaster through the hub to every viewer. `⟁` intent · `▸` tool_call · `▸` file_edit render top-of-fold by default. |
+| **Raw terminal stream** | `/raw` toggle drops you into the bit-for-bit PTY (xterm emulator), then `/feed` returns to the structured view. |
+| **On-chain tip · 3% protocol fee** | One transaction, two `SystemProgram::transfer` legs. 0.005 – 0.05 SOL typical range. Devnet-verified end to end. |
+| **Lobby + chat + profile** | Browse live broadcasters, sort by tips, drop into the room with one keystroke. Wallet-keyed handles. |
+| **Roulette · ambient micro-game** | A small social break that runs alongside a coding session — not the headline; the headline is the stream itself. |
+| **MCP server (6 tools)** | `han_stream_start`, `han_stream_stop`, `han_log`, `han_browse`, `han_connect`, `han_tip`. Bridges Claude Code & Cursor. Aider & Codex CLI compatible via MCP protocol. |
+
+## Quickstart
 
 ```bash
-# 1) Prerequisites (tek seferlik)
-brew install redis postgresql@14    # zaten varsa atla
-brew services start redis
-brew services start postgresql@14
+# Prerequisites
+brew install redis postgresql@14
+brew services start redis postgresql@14
 createdb han
 
-# 2) Han'ı klonla + kur
+# Clone + install
 git clone https://github.com/omeraksu/cli-han
 cd cli-han
 pnpm install
-pnpm setup:env       # .env'i .env.example'dan kopyala + symlink kur
-# .env'i editöründe aç ve doldur:
-#   WALLET_ADDRESS=<senin solana pubkey>
-#   FEE_COLLECTOR_PUBKEY=<fee collector wallet, devnet için kendine yarat>
-#   SOLANA_RPC_URL=https://api.devnet.solana.com
-#   DATABASE_URL=postgresql://<senin macos user>@localhost:5432/han
-#   REDIS_URL=redis://localhost:6379
+pnpm setup:env       # copy .env.example, then fill in:
+                     #   WALLET_ADDRESS, FEE_COLLECTOR_PUBKEY,
+                     #   SOLANA_RPC_URL=https://api.devnet.solana.com,
+                     #   DATABASE_URL, REDIS_URL
 pnpm -r build
 pnpm --filter @han/hub exec prisma migrate dev --name init
 
-# 3) Hub'ı başlat (Terminal 1, repo kökünde)
-cd /path/to/cli-han
-pnpm hub
-# → "Hub listening on port 3000"
-
-# 4) Yayını aç (Terminal 2, repo kökünde)
-cd /path/to/cli-han
-pnpm stream
-# İlk açılışta wizard: handle + bio seç → ENTER
-# PTY açılır, ne istersen yaz (claude code, cargo build, vs.)
-# Alt çubukta: [han] ◉ live ◎ N viewers 🔥 X SOL
-
-# 5) İzleyici (Terminal 3, repo kökünde)
-cd /path/to/cli-han
-pnpm browse
-# ↑↓ ile yayın seç, ENTER ile bağlan
-# Split pane: sol stream, sağ chat
-# /raw    → ham terminal'i izle
-# /tip 0.005 → devnet'te %3 komisyonlu gerçek tip
-# /play   → Roulette mola oyunu
-# /profile → kendi profilin · /profile @alice → başkası
-# /settings → privacy + summarizer modu
-# /quit
+# Three terminals
+pnpm hub      # T1 · hub listens on :3000
+pnpm stream   # T2 · broadcaster (pick handle, write code)
+pnpm browse   # T3 · viewer (↑↓ to pick a stream, ⏎ to join)
 ```
 
-İlk yayını 60 saniyede başlatabilir, gerçek devnet SOL ile tip kabul edebilirsin.
+Inside the viewer:
+- `/raw` ↔ `/feed` — toggle bit-for-bit vs structured event view
+- `/tip 0.005` — devnet SOL tip, 3% protocol fee verified on-chain
+- `/play` — Roulette ambient game
+- `/profile @alice` — read another broadcaster's profile
+- `/quit`
 
-## Claude Code MCP — "han'da yayın aç" diyebilmek
+## MCP integration — "open a stream on Han"
 
-Han'ı bir MCP server olarak Claude Code (veya Cursor/Aider) içinde kullanabilirsin. AI doğal dilden tetikler: yayın açar, her turn'de log atar, başkalarını izler, tip atar.
-
-Detay: `.claude/docs/mcp-setup.md`. Kısaca:
+Han ships as an MCP server so Claude Code, Cursor, or any MCP-compatible agent can drive it in natural language.
 
 ```jsonc
 // .mcp.json
@@ -73,7 +72,7 @@ Detay: `.claude/docs/mcp-setup.md`. Kısaca:
       "args": ["/absolute/path/to/cli-han/packages/mcp-server/dist/index.js"],
       "env": {
         "HAN_HUB_URL": "http://localhost:3000",
-        "WALLET_ADDRESS": "<senin pubkey>",
+        "WALLET_ADDRESS": "<your pubkey>",
         "FEE_COLLECTOR_PUBKEY": "<fee collector pubkey>"
       }
     }
@@ -81,173 +80,81 @@ Detay: `.claude/docs/mcp-setup.md`. Kısaca:
 }
 ```
 
-Claude Code yeniden başlat → `/mcp` ile `han` server + 6 tool listelenir.
+```
+[you]      open a stream on han
+[claude]   ✓ live · session 9mdv.xxxx
+[you]      track down the runtime bug
+[claude]   (han_log fires on every turn + tool call;
+            viewers see ⟁ intent · ▸ tool_call · ▸ file_edit
+            in their structured feed in real time)
+```
+
+Setup notes: `.claude/docs/mcp-setup.md`.
+
+## Architecture
+
+Three runtimes, one event bus, one on-chain tip path.
 
 ```
-[user] han'da yayın aç
-[claude] ✓ live · session 9mdv.xxxx
-[user] runtime bug'ı bul
-[claude] (han_log her turn ve tool call'da çağrılır, viewer broadcast feed'inde
-         ⟁ intent · ▸ tool_call · ▸ file_edit canlı görünür)
+broadcaster · runtime/cli         hub · network                  viewer · runtime/cli
+─────────────────────────         ─────────────────────          ──────────────────────
+Node + node-pty + ink             Fastify + WebSocket fan-out    same binary as broadcaster
+MCP server (6 tools)              Redis · Postgres               browse · join · chat · tip
+                            ──→   Structured event bus     ──→
+                                  (MCP → fan-out)
+                                  V1.5: hub-side summarizer
+                                       + moderator agents
+                            ──→   on-chain tip · 2× transfer ──→
+                                  (broadcaster + protocol)
 ```
 
-İzleyici tarafı yine `pnpm browse` ile aynı terminal CLI.
+- **Stack:** Node.js + TypeScript everywhere · React (ink) on the CLI · Anchor (Rust) on Solana · Solana devnet (V1)
+- **Tip flow:** program-less, two `SystemProgram::transfer` in a single TX (broadcaster net + 3% protocol fee), verified on-chain
+- **Game escrow:** Anchor program deployed on devnet — runtime invoke lands in V1.5
 
 ## Roadmap
 
-Han şu an **indie product** modunda, devnet odaklı V1 yolculuğu. Mainnet V2'ye ertelendi (kullanıcı kararı). Detay: ADR `2026-05-13-indie-product-pivot`.
+Han is an indie product. The pitch deck has the full story; the short version:
 
-| Versiyon | Kapsam | Cluster |
+| Version | Window | Highlights |
 |---|---|---|
-| **V1** (4 hafta) | Hub canlı + viewer split pane + tip komisyonu %3 + Profile + onboarding | devnet |
-| **V1.5** | Pong + Type Race engine + on-chain stake + SAS attestation + summarizer AI | devnet |
-| **V2** | Premium abonelik $9/ay + mainnet deploy + web companion app | mainnet |
+| **V1** · *now* | May 2026 · devnet | Structured feed default · raw mode toggle · 2× transfer tip + 3% fee · MCP (6 tools) · Roulette · lobby/profile |
+| **V1.5** | Q3 2026 · devnet | SummarizerAgent (narrative feed via Claude Sonnet) · ModeratorAgent · idle-gap detection · escrow runtime invoke · Pong + Type-race playable |
+| **V2** | Q4 2026 — Q1 2027 · mainnet | Multi-leg tip in one TX (4 legs: broadcaster + protocol + agent operator + referrer) · on-chain agent identity (PDA per agent) · viewer-side companion agents · Halborn audit complete |
+| **V3** | 2027+ | SAS attestation for agent actions and game outcomes · capability marketplace · rev-share rails · SPL tokens (USDC tip + subscriptions) |
 
-V1 birincil gelir: tip komisyonu %3 (program-less, iki SystemProgram::transfer tek TX). Detay: ADR `2026-05-13-tip-fee-architecture`.
-
-## Live deployment
-
-| | Devnet |
-|---|---|
-| Program ID | `D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD` |
-| Explorer | https://explorer.solana.com/address/D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD?cluster=devnet |
-| IDL metadata | `5HyaoGGrbSAdtbdfSzpU4B5ntHm9svA4D6MvawJ4U6i2` |
-| Upgrade authority | `9mdvkieFVKursJ1rL2fCaxvNUuDkTznitSCk8u39RAZX` |
-| Hub authority (V2) | `GBTmt5CgCFfnjbruroanitjMVF8LF1EjabdQvkGrTSir` |
-| Mainnet | not yet — V1 hedef devnet |
-
-## Hızlı kurulum
-
-```bash
-# 1. Bu klasörün içeriğini Han repo'na kopyala
-cp -r .claude /path/to/han/
-cp .mcp.json /path/to/han/
-cp CLAUDE.md /path/to/han/
-
-# 2. Repo'da Claude Code'u başlat
-cd /path/to/han
-claude
-
-# 3. İlk koşturma için
-> /plan Han için Sprint 1 milestone'unu çıkaralım
-```
-
-## İçindekiler
+## Repo layout
 
 ```
-.claude/
-├── settings.json              model, izinler, env, hook bağlantıları
-├── agents/                    11 subagent
-│   ├── architect.md
-│   ├── runtime-engineer.md    PTY, streaming, CLI binary
-│   ├── hub-engineer.md        backend, fanout, lobby, chat
-│   ├── summarizer-engineer.md broadcast feed, AI özet pipeline
-│   ├── game-engineer.md       Pong, Type-race, game SDK
-│   ├── ui-designer.md         terminal UI, ANSI, ink, render
-│   ├── anchor-engineer.md     Solana program (escrow, refund — SAS attestation program-dışı)
-│   ├── solana-client-engineer.md SDK, wallet, tip, market
-│   ├── qa-engineer.md         test, security, review
-│   ├── debug-specialist.md    PTY, network, runtime hata
-│   └── demo-master.md         hackathon submission
-├── commands/                  9 slash command
-│   ├── plan.md
-│   ├── ship-feature.md
-│   ├── deploy-devnet.md
-│   ├── prep-demo.md
-│   ├── review-all.md
-│   ├── pty-debug.md
-│   ├── stream-test.md
-│   ├── game-add.md
-│   └── solana-flow-test.md
-├── skills/                    7 proje skill'i
-│   ├── han-architecture/SKILL.md
-│   ├── han-pty-streaming/SKILL.md
-│   ├── han-summarizer/SKILL.md
-│   ├── han-game-protocol/SKILL.md
-│   ├── han-solana-economy/SKILL.md
-│   ├── han-terminal-ui/SKILL.md
-│   └── han-conventions/SKILL.md
-├── hooks/                     2 hook
-│   ├── pre-tool.json
-│   └── post-tool.json
-└── docs/
-    ├── architecture.md        ana mimari döküman
-    ├── prompt-update-guide.md system prompt'ları nasıl güncellersin
-    └── decisions/             ADR'lar
-
-CLAUDE.md                      repo kökü, Claude Code önce burayı okur
-.mcp.json                      proje seviyesi MCP server'lar
+apps/
+├─ runtime/        CLI binary (broadcaster + viewer modes)
+│  └─ src/streamer, viewer, ui, wallet, transport
+└─ hub/            backend
+   └─ src/stream, lobby, chat, rooms, routes, solana
+programs/han/      Anchor (escrow + refund paths)
+sdk/               TypeScript SDK + IDL
+packages/mcp-server/   MCP bridge — 6 tools
+pitch/             Vite + React shell wrapping the static deck
+.claude/           dev environment: subagents, skills, slash commands
 ```
 
-## Üç katman, üç sorumluluk
+## Development
 
-**Skill havuzu** (machine-level, `~/.claude/skills/`): solana.new ile gelen 25 journey + 77 ekosistem skill. Helius plugin (RPC, DAS API). Genel Solana ve build pattern'ları.
+Built with 1 human + 11 Claude-Code subagents (architect, runtime-engineer, hub-engineer, summarizer-engineer, game-engineer, ui-designer, anchor-engineer, solana-client-engineer, qa-engineer, debug-specialist, demo-master). Each owns a surface; `architect` dispatches.
 
-**Proje skill'leri** (repo-level, `.claude/skills/`): Han'a özel sabit bilgi. PTY streaming, summarizer pipeline, game protocol, micro-economy, terminal UI, conventions. Subagent'lar buraya başvurur.
-
-**Subagent'lar** (repo-level, `.claude/agents/`): davranış katmanı. Her birinin kendi sorumluluk alanı.
-
-## Plugin önerileri
-
-```bash
-# solana.new (machine-level skill bundle)
-curl -fsSL https://www.solana.new/setup.sh | bash
-
-# Helius (Solana RPC, 60+ tool, expert skills)
-claude /plugin install helius@helius-labs
-```
-
-## MCP server'lar
-
-`.mcp.json` proje seviyesi MCP config'i içerir:
-
-- **GitHub** issue, PR, repo data
-- **Context7** library docs (node-pty, ws, ink, Anchor)
-
-## Sık komutlar
+Slash commands:
 
 ```
-/plan <feature>            yeni iş için plan, architect üretir
-/ship-feature <plan>       onaylanmış planı sırayla teslim et
-/deploy-devnet             Anchor build + deploy + IDL senkron
-/prep-demo                 hackathon submission paketi
-/review-all                ship öncesi son kontrol
-/pty-debug                 PTY veya stream sorunu debug
-/stream-test               yayıncı→hub→izleyici akışı uçtan uca test
-/game-add <isim>           yeni mini-game scaffold
-/solana-flow-test          devnet üstünde tip + attestation test
+/plan <feature>          ask architect to design a feature
+/ship-feature <plan>     ship an approved plan step by step
+/deploy-devnet           Anchor build + deploy + IDL sync
+/stream-test             end-to-end broadcaster → hub → viewer smoke test
+/solana-flow-test        devnet tip + attestation test
+/review-all              pre-ship review across layers
 ```
 
-## İlk denemen için
+Conventions, ADRs, and the architecture deep-dive live under `.claude/docs/`. Subagent definitions are in `.claude/agents/`.
 
-```bash
-cd /path/to/han
-claude
+## License
 
-> /plan Han Sprint 1 için PTY runtime + minimal hub + tek izleyici akışı planlayalım
-
-# architect bir plan üretir, sen onaylarsın
-> /ship-feature <plan>
-
-# her adımda bir agent devreye girer, qa-engineer review eder, sonunda demo edebilirsin
-```
-
-## Agent listesi, kim neyi sahiplenir
-
-| Agent | Sorumluluk alanı | Klasör |
-|---|---|---|
-| architect | mimari, ADR, dispatcher | (planlama) |
-| runtime-engineer | CLI binary, PTY capture, WebSocket transport | `apps/runtime/` |
-| hub-engineer | hub backend, fanout, lobby, chat | `apps/hub/` |
-| summarizer-engineer | broadcast feed pipeline | `apps/hub/summarizer/` |
-| game-engineer | Pong, Type-race, game SDK | `apps/hub/games/`, `apps/runtime/games/` |
-| ui-designer | terminal UI, ink, render | `apps/runtime/ui/` |
-| anchor-engineer | Anchor program | `programs/` |
-| solana-client-engineer | SDK, wallet, tip flow | `sdk/`, `apps/runtime/wallet/` |
-| qa-engineer | test, güvenlik, review | (test) |
-| debug-specialist | PTY, network, runtime hata | (debug) |
-| demo-master | hackathon submission | (teslim) |
-
-## Lisans
-
-MIT. solana.new (SendAI + Superteam), solana-foundation/solana-dev-skill, ve solanabr/solana-claude-config örneklerinden ilham alır.
+MIT.
