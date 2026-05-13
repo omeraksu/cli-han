@@ -62,9 +62,7 @@ export function App({
   viewerWallet,
 }: AppProps): JSX.Element {
   const { exit } = useApp();
-  // V1 default: raw. Summarizer (broadcast feed) ships in V1.5; until
-  // it does, `feed` is always empty. Users can flip back via /feed.
-  const [mode, setMode] = useState<StreamMode>('raw');
+  const [mode, setMode] = useState<StreamMode>('feed');
 
   // Split ratio between stream pane (left) and chat/overlay pane (right).
   // [ shifts the divider left (right pane grows), ] shifts it right.
@@ -75,10 +73,10 @@ export function App({
   const SPLIT_MAX = 0.75;
   const [splitRatio, setSplitRatio] = useState(SPLIT_DEFAULT);
 
-  // Tell the hub our initial mode so the fanout adds us to the raw bucket.
+  // Tell the hub our initial mode so the fanout adds us to the feed bucket.
   useEffect(() => {
     const t = setTimeout(() => {
-      client.send({ type: 'switch_mode', mode: 'raw' });
+      client.send({ type: 'switch_mode', mode: 'feed' });
     }, 300);
     return () => clearTimeout(t);
   }, [client]);
