@@ -1,0 +1,37 @@
+{
+  "name": "@han/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "han": "./dist/index.js"
+  },
+  "scripts": {
+    "dev:streamer": "node --watch -r dotenv/config dist/index.js stream",
+    "dev:viewer": "node --watch -r dotenv/config dist/index.js browse",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@han/sdk": "workspace:^",
+    "@solana/web3.js": "^1.98.0",
+    "@xterm/headless": "^5.5.0",
+    "bs58": "^6.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "ink": "^5.1.0",
+    "node-pty": "1.2.0-beta.12",
+    "react": "^18.3.1",
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

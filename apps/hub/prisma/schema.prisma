@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                String       @id @db.VarChar(64)
+  streamerWallet    String       @db.VarChar(64)
+  wsToken           String?      @db.VarChar(64)
+  startedAt         DateTime
+  endedAt           DateTime?
+  totalViewers      Int          @default(0)
+  totalTipsLamports BigInt       @default(0)
+  chatMessages      ChatMessage[]
+  tips              Tip[]
+  room              Room?        @relation(fields: [roomId], references: [id])
+  roomId            String?      @unique @db.VarChar(64)
+  @@map("sessions")
+}
+
+// A Room is the universal social unit:
+//  - kind = 'channel': seeded persistent kanal (han-lobby, türkçe, …)
+//  - kind = 'adhoc':   kullanıcı yarattığı geçici oda (24h TTL)
+//  - kind = 'stream':  bir yayının kendi odası (sessionId == roomId)
+model Room {
+  id           String        @id @db.VarChar(64)
+  kind         String        @db.VarChar(16)
+  slug         String        @unique @db.VarChar(64)
+  title        String        @db.VarChar(128)
+  ownerWallet  String?       @db.VarChar(64)
+  createdAt    DateTime      @default(now())
+  endedAt      DateTime?
+  metadata     Json?
+  chatMessages ChatMessage[]
+  session      Session?
+  @@map("rooms")
+}
+
+model Profile {
+  wallet    String   @id @db.VarChar(64)
+  handle    String   @unique @db.VarChar(32)
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@map("profiles")
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid()) @db.Uuid
+  // sessionId kept for backward compat reads; new writes use roomId.
+  sessionId  String?  @db.VarChar(64)
+  roomId     String?  @db.VarChar(64)
+  userWallet String   @db.VarChar(64)
+  content    String
+  createdAt  DateTime @default(now())
+  session    Session? @relation(fields: [sessionId], references: [id])
+  room       Room?    @relation(fields: [roomId], references: [id])
+  @@map("chat_messages")
+}
+
+model Tip {
+  id                String   @id @default(uuid()) @db.Uuid
+  sessionId         String   @db.VarChar(64)
+  roomId            String?  @db.VarChar(64)
+  fromWallet        String   @db.VarChar(64)
+  toWallet          String   @db.VarChar(64)
+  amountLamports    BigInt
+  feeLamports       BigInt   @default(0)
+  streamerLamports  BigInt   @default(0)
+  txSignature       String   @db.VarChar(128)
+  createdAt         DateTime @default(now())
+  session           Session  @relation(fields: [sessionId], references: [id])
+  @@map("tips")
+}
+
+model GameResult {
+  id             String   @id @default(uuid()) @db.Uuid
+  gameType       String   @db.VarChar(32)
+  gameId         BigInt
+  players        Json
+  winner         String   @db.VarChar(64)
+  stakeLamports  BigInt
+  potLamports    BigInt
+  roomId         String?  @db.VarChar(64)
+  attestationPda String?  @db.VarChar(64)
+  attestationTx  String?  @db.VarChar(128)
+  settledTx      String?  @db.VarChar(128)
+  createdAt      DateTime @default(now())
+  @@map("game_results")
+}
+
+model Attestation {
+  id          String   @id @default(uuid()) @db.Uuid
+  type        String   @db.VarChar(32)
+  payload     Json
+  pda         String   @db.VarChar(64)
+  txSignature String   @db.VarChar(128)
+  createdAt   DateTime @default(now())
+  @@map("attestations")
+}

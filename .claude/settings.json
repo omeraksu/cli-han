@@ -1,0 +1,46 @@
+{
+  "model": "claude-opus-4-7",
+  "env": {
+    "SOLANA_CLUSTER": "devnet",
+    "ANCHOR_PROVIDER_URL": "https://api.devnet.solana.com",
+    "ANCHOR_WALLET": "~/.config/solana/id.json",
+    "HAN_HUB_URL": "http://localhost:3000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(anchor:*)",
+      "Bash(solana:*)",
+      "Bash(pnpm:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(cargo:*)",
+      "Bash(yarn:*)",
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(redis-cli:*)",
+      "Bash(psql:*)",
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(curl * | bash)",
+      "Bash(curl * | sh)",
+      "Bash(wget * | bash)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.config/solana/id.json)",
+      "Read(~/.ssh/**)",
+      "Write(./.env)",
+      "Write(~/.ssh/**)"
+    ]
+  }
+}

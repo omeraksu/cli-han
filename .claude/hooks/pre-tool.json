@@ -1,0 +1,53 @@
+{
+  "$schema": "Pre-tool hook executes BEFORE Claude Code uses any tool. Use this to add safety checks or context.",
+  "rules": [
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "anchor deploy*"
+      },
+      "action": "warn",
+      "message": "Anchor deploy çalıştırılmak üzere. Mainnet'e değil devnet'e deploy ettiğinden emin ol. Anchor.toml'u kontrol et."
+    },
+    {
+      "match": {
+        "tool": "Write",
+        "path": "**/.env"
+      },
+      "action": "deny",
+      "message": ".env dosyasına yazma yetkin yok. Secret yönetimi için solana-client-engineer veya hub-engineer'a başvur."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "solana airdrop*"
+      },
+      "action": "warn",
+      "message": "Devnet airdrop. Cluster'ın devnet olduğundan emin ol (solana config get)."
+    },
+    {
+      "match": {
+        "tool": "Edit",
+        "path": "**/Anchor.toml"
+      },
+      "action": "warn",
+      "message": "Anchor.toml değiştiriliyor. Program ID, cluster veya wallet path değişiyorsa architect'e bildir, ADR yaz."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "rm -rf node_modules*"
+      },
+      "action": "warn",
+      "message": "node_modules silinecek. pnpm install ile geri yüklemen gerekecek (workspace çoklu paket)."
+    },
+    {
+      "match": {
+        "tool": "Bash",
+        "command": "pnpm publish*"
+      },
+      "action": "warn",
+      "message": "npm publish! Bu paketi gerçekten yayınlamak istiyor musun? Hackathon V1 öncesi henüz erken olabilir."
+    }
+  ]
+}

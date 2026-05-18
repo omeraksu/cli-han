@@ -1,0 +1,23 @@
+{
+  "name": "han",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "setup:env": "cp -n .env.example .env || true; ln -sf ../../.env apps/hub/.env && ln -sf ../../.env apps/runtime/.env && ln -sf ../../.env packages/mcp-server/.env && chmod 644 .env && echo '.env ready + symlinked to apps/hub, apps/runtime, packages/mcp-server'",
+    "hub": "pnpm --filter @han/hub exec node -r dotenv/config dist/index.js",
+    "stream": "pnpm --filter @han/runtime exec node dist/index.js stream",
+    "browse": "pnpm --filter @han/runtime exec node dist/index.js browse",
+    "connect": "pnpm --filter @han/runtime exec node dist/index.js connect",
+    "dev:hub": "pnpm --filter @han/hub dev",
+    "dev:streamer": "pnpm --filter @han/runtime dev:streamer",
+    "dev:viewer": "pnpm --filter @han/runtime dev:viewer"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
