@@ -1,61 +1,47 @@
-import { PublicKey } from '@solana/web3.js';
-// @coral-xyz/anchor is CommonJS — import via default for Node ESM compat.
-import anchorPkg from '@coral-xyz/anchor';
-import type { BN as BNType } from '@coral-xyz/anchor';
+import { stringToHex, type Address, type Hex } from 'viem';
+
 import { HanClient } from './client.js';
-const { BN } = anchorPkg;
 import { EscrowError } from './errors.js';
-import type { GameRoom, GameRoomStatus } from './types/game-room.js';
+import { hanAbi } from './abi.js';
+import { type GameRoom, type GameRoomStatus } from './types/game-room.js';
 
 export interface TxResult {
-  signature: string;
-  slot?: number;
+  hash: Hex;
 }
 
 export interface CreateGameRoomParams {
   roomId: bigint;
-  gameType: string; // max 32 chars, padded to [u8; 32]
-  entryFee: bigint; // lamports
+  gameType: string;
+  entryFee: bigint;
   maxPlayers: number;
 }
 
-function encodeGameType(s: string): number[] {
-  const arr = new Uint8Array(32);
-  const encoded = new TextEncoder().encode(s.slice(0, 32));
-  arr.set(encoded);
-  return Array.from(arr);
+function encodeGameType(s: string): `0x${string}` {
+  return stringToHex(s.slice(0, 32), { size: 32 });
 }
 
-function roomIdToBN(roomId: bigint): BNType {
-  return new BN(roomId.toString());
+function requireWallet(client: HanClient): NonNullable<HanClient['walletClient']> {
+  if (!client.walletClient) throw new EscrowError('HanClient is read-only (no walletClient)');
+  return client.walletClient;
 }
 
 export async function createGameRoom(
   client: HanClient,
   params: CreateGameRoomParams,
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [vaultPda] = client.findVaultPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .createGameRoom(
-        roomIdToBN(params.roomId),
-        encodeGameType(params.gameType),
-        new BN(params.entryFee.toString()),
-        params.maxPlayers,
-      )
-      .accountsStrict({
-        room: roomPda,
-        vault: vaultPda,
-        config: configPda,
-        host: client.wallet.publicKey,
-        systemProgram: new PublicKey('11111111111111111111111111111111'),
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'createGameRoom',
+      args: [params.roomId, encodeGameType(params.gameType), params.entryFee, params.maxPlayers],
+      value: params.entryFee,
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('createGameRoom failed', err);
   }
@@ -63,25 +49,21 @@ export async function createGameRoom(
 
 export async function joinGame(
   client: HanClient,
-  params: { roomId: bigint },
+  params: { roomId: bigint; entryFee: bigint },
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [vaultPda] = client.findVaultPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .joinGame(roomIdToBN(params.roomId))
-      .accountsStrict({
-        room: roomPda,
-        vault: vaultPda,
-        config: configPda,
-        player: client.wallet.publicKey,
-        systemProgram: new PublicKey('11111111111111111111111111111111'),
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'joinGame',
+      args: [params.roomId],
+      value: params.entryFee,
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('joinGame failed', err);
   }
@@ -89,26 +71,20 @@ export async function joinGame(
 
 export async function settleGame(
   client: HanClient,
-  params: { roomId: bigint; winner: PublicKey },
+  params: { roomId: bigint; winner: Address },
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [vaultPda] = client.findVaultPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .settleGame(roomIdToBN(params.roomId), params.winner)
-      .accountsStrict({
-        room: roomPda,
-        vault: vaultPda,
-        config: configPda,
-        winnerAccount: params.winner,
-        authority: client.wallet.publicKey,
-        systemProgram: new PublicKey('11111111111111111111111111111111'),
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'settleGame',
+      args: [params.roomId, params.winner],
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('settleGame failed', err);
   }
@@ -118,20 +94,18 @@ export async function cancelGame(
   client: HanClient,
   params: { roomId: bigint },
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .cancelGame(roomIdToBN(params.roomId))
-      .accountsStrict({
-        room: roomPda,
-        config: configPda,
-        host: client.wallet.publicKey,
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'cancelGame',
+      args: [params.roomId],
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('cancelGame failed', err);
   }
@@ -141,23 +115,18 @@ export async function claimRefund(
   client: HanClient,
   params: { roomId: bigint },
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [vaultPda] = client.findVaultPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .claimRefund(roomIdToBN(params.roomId))
-      .accountsStrict({
-        room: roomPda,
-        vault: vaultPda,
-        config: configPda,
-        player: client.wallet.publicKey,
-        systemProgram: new PublicKey('11111111111111111111111111111111'),
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'claimRefund',
+      args: [params.roomId],
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('claimRefund failed', err);
   }
@@ -167,23 +136,18 @@ export async function timeoutRefund(
   client: HanClient,
   params: { roomId: bigint },
 ): Promise<TxResult> {
+  const wallet = requireWallet(client);
   try {
-    const [roomPda] = client.findRoomPda(params.roomId);
-    const [vaultPda] = client.findVaultPda(params.roomId);
-    const [configPda] = client.findConfigPda();
-
-    const sig = await client.program.methods
-      .timeoutRefund(roomIdToBN(params.roomId))
-      .accountsStrict({
-        room: roomPda,
-        vault: vaultPda,
-        config: configPda,
-        player: client.wallet.publicKey,
-        systemProgram: new PublicKey('11111111111111111111111111111111'),
-      })
-      .rpc();
-
-    return { signature: sig };
+    const hash = await wallet.writeContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'timeoutRefund',
+      args: [params.roomId],
+      account: wallet.account!,
+      chain: wallet.chain,
+    });
+    await client.publicClient.waitForTransactionReceipt({ hash });
+    return { hash };
   } catch (err) {
     throw new EscrowError('timeoutRefund failed', err);
   }
@@ -194,24 +158,48 @@ export async function getRoomState(
   roomId: bigint,
 ): Promise<GameRoom | null> {
   try {
-    const [roomPda] = client.findRoomPda(roomId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = await (client.program.account as any).gameRoom.fetchNullable(roomPda);
-    if (!raw) return null;
+    const result = (await client.publicClient.readContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'getRoom',
+      args: [roomId],
+    })) as readonly [
+      Address,
+      `0x${string}`,
+      bigint,
+      number,
+      number,
+      number,
+      number,
+      bigint,
+      Address,
+    ];
+    const [host, gameType, entryFee, maxPlayers, playerCount, status, refundBitmap, createdAt, winner] =
+      result;
+
+    if (host === '0x0000000000000000000000000000000000000000' && playerCount === 0) {
+      return null;
+    }
+
+    const players = (await client.publicClient.readContract({
+      address: client.han.address,
+      abi: hanAbi,
+      functionName: 'getPlayers',
+      args: [roomId],
+    })) as Address[];
 
     return {
-      id: BigInt(raw.id.toString()),
-      host: raw.host.toBase58(),
-      gameType: Uint8Array.from(raw.gameType as number[]),
-      entryFee: BigInt(raw.entryFee.toString()),
-      maxPlayers: raw.maxPlayers as number,
-      playerCount: raw.playerCount as number,
-      players: (raw.players as PublicKey[]).map((p) => p.toBase58()),
-      status: raw.status as GameRoomStatus,
-      winner: raw.winner ? (raw.winner as PublicKey).toBase58() : null,
-      createdAt: BigInt(raw.createdAt.toString()),
-      refundClaimed: raw.refundClaimed as number,
-      bump: raw.bump as number,
+      id: roomId,
+      host,
+      gameType,
+      entryFee,
+      maxPlayers,
+      playerCount,
+      players,
+      status: status as GameRoomStatus,
+      winner: winner === '0x0000000000000000000000000000000000000000' ? null : winner,
+      createdAt,
+      refundClaimedBitmap: refundBitmap,
     };
   } catch (err) {
     throw new EscrowError('getRoomState failed', err);

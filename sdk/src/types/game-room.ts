@@ -1,16 +1,17 @@
+import type { Address } from 'viem';
+
 export interface GameRoom {
   id: bigint;
-  host: string; // base58
-  gameType: Uint8Array; // [u8; 32]
+  host: Address;
+  gameType: `0x${string}`;
   entryFee: bigint;
   maxPlayers: number;
   playerCount: number;
-  players: string[]; // base58[]
+  players: Address[];
   status: GameRoomStatus;
-  winner: string | null;
+  winner: Address | null;
   createdAt: bigint;
-  refundClaimed: number; // bitmap
-  bump: number;
+  refundClaimedBitmap: number;
 }
 
 export const GameRoomStatus = {

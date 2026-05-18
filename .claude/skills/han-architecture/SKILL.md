@@ -27,11 +27,11 @@ Backend. WebSocket gateway, stream router, summarizer, lobby, chat, room manager
 
 Sahibi: hub-engineer (ana). summarizer-engineer summarizer alt klasöründe, game-engineer games alt klasöründe.
 
-### Solana (`programs/`, `sdk/`)
+### Solana (`contracts/`, `sdk/`)
 
-Anchor program (game escrow + attestation), TypeScript SDK (helper'lar, cüzdan abstraction).
+Solidity contract (game escrow + attestation), TypeScript SDK (helper'lar, cüzdan abstraction).
 
-Sahibi: anchor-engineer (program), solana-client-engineer (SDK + cüzdan)
+Sahibi: contract-engineer (program), evm-client-engineer (SDK + cüzdan)
 
 ## Repo yapısı
 
@@ -62,7 +62,7 @@ han/
 │       │   └── solana/           # Solana glue
 │       └── package.json
 │
-├── programs/
+├── contracts/
 │   └── han/
 │       ├── src/
 │       │   ├── lib.rs
@@ -133,7 +133,7 @@ han/
 9. Game server state update → broadcast tüm oyunculara + spectator'lara
 10. Win condition → game server "settle" emit
 11. Hub:
-    a. anchor settle_game instruction (Privy hub authority imzalar)
+    a. anchor settle_game instruction (MetaMask/Core hub authority imzalar)
     b. attestation kayıt
     c. room state finalize
 12. Tüm taraflara final state, TX hash gönderilir
@@ -155,7 +155,7 @@ NDJSON, her satır bir mesaj.
 { "type": "registered", "stream_id": "...", "code": "kz-han-7843" }
 { "type": "viewer_count", "n": 5 }
 { "type": "chat_msg", "from": "pubkey...", "text": "..." }
-{ "type": "tip", "from": "pubkey...", "lamports": 50000000 }
+{ "type": "tip", "from": "pubkey...", "wei": 50000000 }
 ```
 
 ### İzleyici → Hub
@@ -163,7 +163,7 @@ NDJSON, her satır bir mesaj.
 { "type": "join", "code": "kz-han-7843", "auth": "..." }
 { "type": "switch_mode", "mode": "feed" | "raw" }
 { "type": "chat_send", "text": "..." }
-{ "type": "tip", "lamports": 50000000 }
+{ "type": "tip", "wei": 50000000 }
 ```
 
 ### Hub → İzleyici
@@ -190,10 +190,10 @@ NDJSON, her satır bir mesaj.
 | CLI binary | Node.js 20+, TypeScript, node-pty, ws, ink |
 | Backend | Node.js, Fastify, ws, Redis (cache) |
 | Summarizer LLM | Anthropic Sonnet via @anthropic-ai/sdk |
-| Anchor program | Rust, Anchor 0.30+ |
+| Solidity contract | Rust, Anchor 0.30+ |
 | TypeScript SDK | @solana/web3.js, Anchor TS bindings |
-| Wallet | Privy server SDK (hub authority), local keypair (CLI user) |
-| Cluster | Solana devnet → mainnet |
+| Wallet | MetaMask/Core server SDK (hub authority), local keypair (CLI user) |
+| Cluster | Fuji testnet → mainnet |
 | Deploy | Hub: Fly.io. CLI: npm package + binary release |
 
 ## Hangi agent neyi sahiplenir
@@ -203,12 +203,12 @@ NDJSON, her satır bir mesaj.
 | `apps/runtime/` (genel) | runtime-engineer |
 | `apps/runtime/ui/` | ui-designer |
 | `apps/runtime/games/` (client) | game-engineer |
-| `apps/runtime/wallet/` | solana-client-engineer |
+| `apps/runtime/wallet/` | evm-client-engineer |
 | `apps/hub/` (genel) | hub-engineer |
 | `apps/hub/summarizer/` | summarizer-engineer |
 | `apps/hub/games/` (server) | game-engineer |
-| `programs/` | anchor-engineer |
-| `sdk/` | solana-client-engineer |
+| `contracts/` | contract-engineer |
+| `sdk/` | evm-client-engineer |
 | `tests/` | qa-engineer |
 | `.claude/docs/decisions/` | architect |
 | Demo paketi | demo-master |
@@ -219,5 +219,5 @@ NDJSON, her satır bir mesaj.
 - **PTY tabanlı capture**: AI tool seçiminden bağımsız.
 - **Default izleyici modu özet**: izleyici context kazansın, privacy filter ek katman.
 - **Solana program ince**: sadece game escrow + attestation. Tip flow program-less.
-- **Hub authority Privy delegated**: settle_game gibi authority gerektiren işlemler için.
+- **Hub authority MetaMask/Core delegated**: settle_game gibi authority gerektiren işlemler için.
 - **V1 scope dar**: 2 oyun (Pong, Type-race), prediction market V2.

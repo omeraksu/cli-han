@@ -1,4 +1,4 @@
-# ADR 2026-05-13 — Indie product pivot, devnet odaklı V1
+# ADR 2026-05-13 — Indie product pivot, Fuji testnet odaklı V1
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted, 2026-05-13.
 
 ## Context
 
-Solana Frontier Hackathon süresi 12 Mayıs 2026'da kapandı. Han submission olarak teslim edildi (devnet program `D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD` canlı, repo public, 14 commit). Submission'dan sonra geliştirici niyet açıkladı:
+Solana Frontier Hackathon süresi 12 Mayıs 2026'da kapandı. Han submission olarak teslim edildi (Fuji testnet program `D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD` canlı, repo public, 14 commit). Submission'dan sonra geliştirici niyet açıkladı:
 
 > "Hackathon modunda değiliz onun süresi geçti. Ben bunu ürün yapmak istiyorum."
 
@@ -14,7 +14,7 @@ Sonra modu netleştirdi:
 
 - **Mod**: solo indie, gelir hedefli (start-up değil, side project değil)
 - **Birincil gelir**: tip komisyonu %3 (V1), premium abonelik V2 yedek
-- **Cluster hedefi**: devnet'te kalmaya devam, mainnet ileride (V2 sonrası)
+- **Cluster hedefi**: Fuji testnet'te kalmaya devam, mainnet ileride (V2 sonrası)
 - **Demo niyeti**: yavaş ama somut, "demo edebilmek" öncelikli, lansman aceleci değil
 
 Bu, hackathon planından farklı bir frame. Aşağıdaki kararlar buna göre revize edilir.
@@ -25,7 +25,7 @@ Han bir **indie ürün** olarak devam eder. Aşağıdaki 5 ana karar verildi:
 
 ### 1. Cluster
 
-Devnet'te kalır. Mainnet hedefi yok V1 + V1.5 boyunca. Faucet maliyeti yok, gerçek SOL riski yok, demo amaçlı yeterli. Mainnet kararı V2 öncesi yeniden değerlendirilir (kullanıcı kararı).
+Fuji testnet'te kalır. Mainnet hedefi yok V1 + V1.5 boyunca. Faucet maliyeti yok, gerçek SOL riski yok, demo amaçlı yeterli. Mainnet kararı V2 öncesi yeniden değerlendirilir (kullanıcı kararı).
 
 ### 2. Gelir modeli
 
@@ -42,20 +42,20 @@ Dahil:
 - Viewer mode split pane (mevcut)
 - Lobby gerçek hub veriyle
 - Chat (rate limited)
-- **Tip flow** — devnet SOL transferi, %3 hub komisyonu
+- **Tip flow** — Fuji testnet SOL transferi, %3 hub komisyonu
 - Solo Roulette (mevcut)
 - Profile sayfası 5 ekran
 - Privacy filter (default ON)
 - Wallet: local keypair V1
 - Self-hosting (open core)
-- Devnet üzerinden demo akışı
+- Fuji testnet üzerinden demo akışı
 
 Dahil değil (V1.5+):
 - Pong + Type Race engine (V1.5)
 - SAS attestation (V1.5)
 - Summarizer AI pipeline (V1.5 — V1'de raw mode + basit headline yeterli)
 - Premium abonelik (V2)
-- Privy embedded wallet (V2)
+- local hex private key (V2)
 - Mainnet deploy (V2 sonrası)
 
 ### 4. Zaman planı
@@ -65,11 +65,11 @@ Dahil değil (V1.5+):
 | Sprint | Hedef |
 |---|---|
 | 1 — Hub canlı | Redis + Postgres lokal, e2e raw stream + chat |
-| 2 — Tip + Streamer overlay | Devnet'te %3 komisyonlu tip, yayıncı UI overlay |
+| 2 — Tip + Streamer overlay | Fuji testnet'te %3 komisyonlu tip, yayıncı UI overlay |
 | 3 — Profile + Onboarding | 5 Profile ekranı, first-time wizard, lobby polish |
 | 4 — Polish + ilk demo | Bug fix, dokümantasyon, ilk 5 beta tester davet, demo video |
 
-Mainnet sprint'i V2'ye taşındı. Sprint 4 "devnet polish + demo" odaklı.
+Mainnet sprint'i V2'ye taşındı. Sprint 4 "Fuji testnet polish + demo" odaklı.
 
 ### 5. Geliştirme prensipleri
 
@@ -95,23 +95,23 @@ Hackathon'dan devam:
 
 **Pozitif**:
 - Mainnet ertelenince hem teknik (audit, fee, multisig) hem hukuki yük (ToS, vergi) gecikiyor → solo dev için sürdürülebilir
-- Devnet'te kalmak iterasyon hızını koruyor (deploy ücretsiz, faucet bedava)
+- Fuji testnet'te kalmak iterasyon hızını koruyor (deploy ücretsiz, faucet bedava)
 - Indie modu net olarak tanımlanınca scope kararları (Pong/Type Race V1.5, Summarizer V1.5) doğal akıyor
-- Hackathon foundation (Anchor program, 12 Figma ekranı, agentic yapı) tam değerlendiriliyor
+- Hackathon foundation (Solidity contract, 12 Figma ekranı, agentic yapı) tam değerlendiriliyor
 
 **Negatif**:
-- Devnet'te "gerçek para" yok → kullanıcı testinde davranış farkı (kayıp riski yok, ciddiyet düşük)
-- Tip komisyonu devnet'te gelir üretmez (validation testi sadece)
+- Fuji testnet'te "gerçek para" yok → kullanıcı testinde davranış farkı (kayıp riski yok, ciddiyet düşük)
+- Tip komisyonu Fuji testnet'te gelir üretmez (validation testi sadece)
 - Mainnet ertelenince "ne zaman gerçek?" sorusu açık kalır
 
 **Risk mitigasyonu**:
-- Devnet pilot 4-6 hafta, kullanıcı feedback'iyle mainnet kararı netleşir
-- ToS + privacy policy V1'de yazılır (devnet bile olsa hukuki disipline alışmak)
+- Fuji testnet pilot 4-6 hafta, kullanıcı feedback'iyle mainnet kararı netleşir
+- ToS + privacy policy V1'de yazılır (Fuji testnet bile olsa hukuki disipline alışmak)
 
 ## Alternatives considered
 
-- **Tam mainnet V1**: ADR `2026-05-13`'in başında düşünüldü, kullanıcı devnet tercih etti
-- **Mainnet + devnet ikili dağıtım**: çok karmaşık V1 için, sürdürülemez
+- **Tam mainnet V1**: ADR `2026-05-13`'in başında düşünüldü, kullanıcı Fuji testnet tercih etti
+- **Mainnet + Fuji testnet ikili dağıtım**: çok karmaşık V1 için, sürdürülemez
 - **Start-up modu (fundraise + takım)**: kullanıcı solo indie tercih etti
 - **Open source side project**: gelir hedefi kullanıcının niyeti, monetize edilebilir indie tercih edildi
 
@@ -119,7 +119,7 @@ Hackathon'dan devam:
 
 | Doküman / kod | Değişiklik |
 |---|---|
-| `CLAUDE.md` | "Solana Frontier Hackathon submission" → "Indie product, devnet". V1 scope güncellemesi. |
+| `CLAUDE.md` | "Solana Frontier Hackathon submission" → "Indie product, Fuji testnet". V1 scope güncellemesi. |
 | `README.md` | "Roadmap" bölümü, "Self-host" bölümü Sprint 4'te |
 | `HAN_HANDOFF.md` | "Sprint durumu" başlığı, haftalık güncellenir |
 | `2026-05-12-game-decoupled-ui.md` | Revision 2 eklendi (V1.1 → V1.5) |

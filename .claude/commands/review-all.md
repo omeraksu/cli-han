@@ -8,8 +8,8 @@ Sırayla:
 2. **hub-engineer**'a backend güvenlik ve rate limit kontrolü
 3. **summarizer-engineer**'a pipeline maliyet ve fallback doğrulaması
 4. **game-engineer**'a state machine determinism testi
-5. **anchor-engineer**'a Rust kodunu denetlemesini yaptır, CU ölçümü
-6. **solana-client-engineer**'a SDK API'sini denetlemesi
+5. **contract-engineer**'a Rust kodunu denetlemesini yaptır, CU ölçümü
+6. **evm-client-engineer**'a SDK API'sini denetlemesi
 7. **ui-designer**'a accessibility checklist'i
 8. **qa-engineer**'a full review
 9. **demo-master**'a "bu jüri için yeterli mi" değerlendirmesi

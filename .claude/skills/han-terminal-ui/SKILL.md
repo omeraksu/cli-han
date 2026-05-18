@@ -129,7 +129,7 @@ Dar terminal (< 100 sütun) → tek pane stack.
 ### On-chain address
 
 ```jsx
-const OnChainAddress = ({ value, kind = 'address', cluster = 'devnet' }) => {
+const OnChainAddress = ({ value, kind = 'address', cluster = 'Fuji testnet' }) => {
   const short = `${value.slice(0, 4)}...${value.slice(-4)}`;
   return (
     <Box>

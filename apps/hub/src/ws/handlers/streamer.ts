@@ -109,7 +109,7 @@ export function makeStreamerHandlers(ctx: HubContext) {
       streamerName: streamerName ?? existing?.streamerName,
       description: description ?? existing?.description,
       tool: tool ?? existing?.tool,
-      tipSol: existing?.tipSol ?? 0,
+      tipAvax: existing?.tipAvax ?? 0,
     });
 
     // Mirror the session into the new Room registry so the unified

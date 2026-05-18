@@ -1,103 +1,72 @@
-// @coral-xyz/anchor ships as CommonJS, so under Node ESM we have to go
-// through the default export and pull the named bits out manually.
-import anchorPkg from '@coral-xyz/anchor';
-import type { Idl, Program as ProgramType } from '@coral-xyz/anchor';
-const { AnchorProvider, Program, BN } = anchorPkg;
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  VersionedTransaction,
-  type Signer,
-} from '@solana/web3.js';
-import { FailoverConnection } from './rpc-client.js';
-import HanIdl from '../idl/han.json' with { type: 'json' };
+  createWalletClient,
+  getContract,
+  type Address,
+  type Hex,
+  type GetContractReturnType,
+  type PublicClient,
+  type WalletClient,
+} from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 
-export const HAN_PROGRAM_ID = new PublicKey('D7pgqFkNXvHPGocEknUgKHrGjwtNZfsQBQ6ey9xXYXfD');
+import { chainFor, type HanNetwork } from './chain.js';
+import { createHanTransport, createPublicHanClient } from './rpc-client.js';
+import { hanAbi, hanTipRouterAbi } from './abi.js';
 
 export interface HanClientOptions {
-  connection: Connection | FailoverConnection;
-  wallet: Keypair;
-  programId?: PublicKey;
-}
-
-// Minimal wallet adapter compatible with AnchorProvider
-class KeypairWallet {
-  constructor(readonly payer: Keypair) {}
-
-  get publicKey(): PublicKey {
-    return this.payer.publicKey;
-  }
-
-  async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-    if (tx instanceof Transaction) {
-      tx.partialSign(this.payer as Signer);
-    }
-    return tx;
-  }
-
-  async signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
-    return txs.map((tx) => {
-      if (tx instanceof Transaction) {
-        tx.partialSign(this.payer as Signer);
-      }
-      return tx;
-    });
-  }
+  network: HanNetwork;
+  hanContract: Address;
+  tipRouterContract: Address;
+  privateKey?: Hex;
+  publicClient?: PublicClient;
+  walletClient?: WalletClient;
+  extraRpcUrls?: string[];
 }
 
 export class HanClient {
-  readonly program: ProgramType;
-  readonly connection: Connection;
-  readonly wallet: Keypair;
+  readonly network: HanNetwork;
+  readonly publicClient: PublicClient;
+  readonly walletClient: WalletClient | null;
+  readonly han: GetContractReturnType<typeof hanAbi, PublicClient | WalletClient, Address>;
+  readonly tipRouter: GetContractReturnType<
+    typeof hanTipRouterAbi,
+    PublicClient | WalletClient,
+    Address
+  >;
 
   constructor(opts: HanClientOptions) {
-    this.wallet = opts.wallet;
+    this.network = opts.network;
+    this.publicClient =
+      opts.publicClient ??
+      createPublicHanClient({ network: opts.network, extraUrls: opts.extraRpcUrls });
 
-    if (opts.connection instanceof FailoverConnection) {
-      this.connection = opts.connection.getConnection();
+    if (opts.walletClient) {
+      this.walletClient = opts.walletClient;
+    } else if (opts.privateKey) {
+      const account = privateKeyToAccount(opts.privateKey);
+      this.walletClient = createWalletClient({
+        account,
+        chain: chainFor(opts.network),
+        transport: createHanTransport({ network: opts.network, extraUrls: opts.extraRpcUrls }),
+      });
     } else {
-      this.connection = opts.connection;
+      this.walletClient = null;
     }
 
-    const kpWallet = new KeypairWallet(opts.wallet);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const provider = new AnchorProvider(this.connection, kpWallet as any, {
-      commitment: 'confirmed',
+    const clientForContract = this.walletClient ?? this.publicClient;
+    this.han = getContract({
+      abi: hanAbi,
+      address: opts.hanContract,
+      client: clientForContract as PublicClient | WalletClient,
     });
-
-    this.program = new Program(HanIdl as Idl, provider);
-
-    const programId = opts.programId ?? HAN_PROGRAM_ID;
-    if (!programId.equals(HAN_PROGRAM_ID)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.program as any)._programId = programId;
-    }
+    this.tipRouter = getContract({
+      abi: hanTipRouterAbi,
+      address: opts.tipRouterContract,
+      client: clientForContract as PublicClient | WalletClient,
+    });
   }
 
-  findRoomPda(roomId: bigint): [PublicKey, number] {
-    const roomIdBN = new BN(roomId.toString());
-    const seedBytes = roomIdBN.toArrayLike(Buffer, 'le', 8);
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from('room'), seedBytes],
-      this.program.programId,
-    );
-  }
-
-  findVaultPda(roomId: bigint): [PublicKey, number] {
-    const roomIdBN = new BN(roomId.toString());
-    const seedBytes = roomIdBN.toArrayLike(Buffer, 'le', 8);
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from('vault'), seedBytes],
-      this.program.programId,
-    );
-  }
-
-  findConfigPda(): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from('config')],
-      this.program.programId,
-    );
+  get accountAddress(): Address | null {
+    return this.walletClient?.account?.address ?? null;
   }
 }

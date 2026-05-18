@@ -39,7 +39,7 @@ Scope listesi:
 - `games` (apps/hub/games/, apps/runtime/games/)
 - `ui` (apps/runtime/ui/)
 - `wallet` (apps/runtime/wallet/)
-- `programs` (programs/)
+- `programs` (contracts/)
 - `sdk` (sdk/)
 - `docs` (.claude/docs/, README.md, vs.)
 - `infra` (deployment, CI/CD)
@@ -47,7 +47,7 @@ Scope listesi:
 
 ## Naming
 
-### Rust (programs/)
+### Rust (contracts/)
 
 - Instruction: snake_case fiil, `create_game_escrow`, `settle_game`
 - Account struct: PascalCase, `EscrowVault`, `GameAttestation`
@@ -114,17 +114,17 @@ export class StreamError extends HanError {}
 
 ## Testing
 
-### Anchor (programs/)
+### Anchor (contracts/)
 
-- `programs/han/tests/<feature>.ts` dosyası
+- `contracts/han/tests/<feature>.ts` dosyası
 - Happy path + en az 2 edge case + en az 1 failure case
 - PDA derivation test'i ayrı
-- `anchor test --skip-deploy` ile koşulur
+- `forge test --skip-deploy` ile koşulur
 
 ### SDK (sdk/)
 
 - vitest, dosya `*.test.ts`
-- Mock connection ile devnet'siz testler
+- Mock connection ile Fuji testnet'siz testler
 - Public API her fonksiyonun en az 1 test'i
 
 ### Runtime ve hub
@@ -140,11 +140,11 @@ export class StreamError extends HanError {}
 - Deterministic test, aynı input → aynı output
 - Tick logic'i mock zaman ile (33ms tick, 100 tick = 3.3sn)
 
-### End-to-end (devnet)
+### End-to-end (Fuji testnet)
 
 - Hackathon haftası critical
 - Hub başlat → runtime streamer başlat → runtime viewer → oyun → settle
-- Devnet TX'leri explorer'da doğrula
+- Fuji testnet TX'leri explorer'da doğrula
 
 ## Dosya boyutu
 
@@ -194,7 +194,7 @@ import type { EscrowState } from '@/types';
 
 - Frontend (runtime CLI): `console.log` sadece dev'de, production'da kaldır veya log seviyesi flag'i
 - Backend (hub): structured logging (pino önerilir)
-- Anchor program: `msg!` minimum, sadece debug için
+- Solidity contract: `msg!` minimum, sadece debug için
 - Asla secret veya keypair log'lama, asla kullanıcı output'unu raw log'lama (privacy)
 
 ## Security

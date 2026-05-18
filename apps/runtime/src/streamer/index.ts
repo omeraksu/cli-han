@@ -1,8 +1,6 @@
 import React from 'react';
 import { render } from 'ink';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
-import type { Keypair } from '@solana/web3.js';
+import type { PrivateKeyAccount } from 'viem';
 import { WsClient } from '../transport/ws-client.js';
 import { applyPrivacyFilter } from './privacy-filter.js';
 import { PtySession } from './pty.js';
@@ -18,7 +16,7 @@ import type {
 
 export interface StreamerOptions {
   hubUrl: string;
-  walletKeypair: Keypair;
+  account: PrivateKeyAccount;
   command?: string;
   streamerName?: string;
   description?: string;
@@ -54,8 +52,8 @@ async function runFirstTimeSetup(
 }
 
 export async function startStreamer(opts: StreamerOptions): Promise<void> {
-  const { hubUrl, walletKeypair, command } = opts;
-  const walletAddress = walletKeypair.publicKey.toBase58();
+  const { hubUrl, account, command } = opts;
+  const walletAddress = account.address;
   let streamerName = opts.streamerName;
   let description = opts.description;
   const tool = detectTool(command);
@@ -93,9 +91,9 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     if (!nonceRes.ok) {
       throw new Error(`Hub /sessions/nonce returned ${nonceRes.status}: ${await nonceRes.text()}`);
     }
-    const { nonce } = (await nonceRes.json()) as RequestNonceResponse;
-    const nonceBytes = Buffer.from(nonce, 'hex');
-    const signature = bs58.encode(nacl.sign.detached(nonceBytes, walletKeypair.secretKey));
+    const { nonce, message } = (await nonceRes.json()) as RequestNonceResponse;
+    const signMessage = message ?? `Han login\nnonce: ${nonce}`;
+    const signature = await account.signMessage({ message: signMessage });
 
     const body: CreateSessionRequest = {
       streamerWallet: walletAddress,
@@ -131,7 +129,7 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
 
   let ptySession: PtySession | null = null;
   let viewerCount = 0;
-  let tipTotalSol = 0;
+  let tipTotalAvax = 0;
 
   function stderrLine(line: string): void {
     // Emit on its own line so it never overwrites a shell prompt.
@@ -207,9 +205,9 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
 
   ws.on('new_tip', (payload) => {
     const p = payload as Omit<Extract<HubToStreamer, { type: 'new_tip' }>, 'type'>;
-    tipTotalSol += p.amount;
+    tipTotalAvax += p.amount;
     stderrLine(
-      `\x1b[33m🔥 +${p.amount} SOL from ${p.from.slice(0, 4)}…\x1b[0m  ·  total ${tipTotalSol.toFixed(3)} SOL`,
+      `\x1b[33m🔥 +${p.amount} AVAX from ${p.from.slice(0, 6)}…\x1b[0m  ·  total ${tipTotalAvax.toFixed(4)} AVAX`,
     );
   });
 

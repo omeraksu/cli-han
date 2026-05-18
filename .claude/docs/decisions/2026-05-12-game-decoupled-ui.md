@@ -10,7 +10,7 @@ Plan ve `CLAUDE.md` V1 scope'u: **2 oyun (Pong + Type-race), Anchor game escrow 
 
 İki çelişki:
 1. **Hangi oyun?** Pong vs Type-race vs Roulette.
-2. **Escrow var mı?** Roulette mockup "no stake" diyor; Anchor program'da `create_game_room` + `join_game` + `settle_game` zaten yazılı, escrow logic V1 hazır.
+2. **Escrow var mı?** Roulette mockup "no stake" diyor; Solidity contract'da `create_game_room` + `join_game` + `settle_game` zaten yazılı, escrow logic V1 hazır.
 
 Hackathon teslimine 5 saat. Tüm oyun engine + canvas + state machine + integration uçtan uca yetişmez.
 
@@ -22,7 +22,7 @@ Somut:
 
 1. **Generic `GameCanvas` wrapper** — `apps/runtime/src/ui/GameCanvas.tsx`. Props: `{ gameType: string, children: ReactNode }`. Sadece çerçeve, başlık, hint satırı (Roulette/Pong/Type-race fark etmez). Şu an yalnızca **Roulette mockup statik render eder** (Figma 10:111'a birebir).
 2. **Roulette UI mockup** — gerçek state machine yok. Spin animasyonu basit deterministic (timer + frame). "Result" Figma'daki sabit metin: `✦ COMMIT ✦` ve hardcoded dare text.
-3. **Game escrow Anchor program V1'de kalır** ama runtime tarafında çağrılmaz. `programs/han/` derleniyor, `sdk/src/escrow.ts` hazır — V2'ye atanmaz, sadece **bağlanmaz**.
+3. **Game escrow Solidity contract V1'de kalır** ama runtime tarafında çağrılmaz. `contracts/han/` derleniyor, `sdk/src/escrow.ts` hazır — V2'ye atanmaz, sadece **bağlanmaz**.
 4. **`apps/hub/games/` ve `apps/runtime/games/` klasörleri V1'de yaratılmaz.** State machine, server tick loop, multiplayer fanout — hepsi V2.
 5. **Solana ekonomisi V1** sadece **tip** akışı (program-less, SystemProgram::transfer). Game escrow on-chain V2 demo.
 
@@ -32,7 +32,7 @@ Somut:
 - 5 saatte yetişebilir bir hackathon submission
 - UI'da görsel deneyim Figma'ya birebir
 - Generic canvas community'ye gelecekte plug-in için zemin (han-game-protocol skill'i bu plan'a uyar)
-- Anchor program zaten yazıldığı için kod boşa gitmedi — V2'de hub tarafına bağlanır
+- Solidity contract zaten yazıldığı için kod boşa gitmedi — V2'de hub tarafına bağlanır
 
 **No:**
 - "On-chain mini-game with stake" hackathon submission'ında **canlı çalışmaz**; sadece arşitekt diyagramında "var" der
@@ -48,7 +48,7 @@ Somut:
 | Plan dosyası | Faz 6.2 GameCanvas → Roulette mockup'a daralt |
 | `apps/runtime/src/ui/GameCanvas.tsx` | Yeni — wrapper |
 | `apps/runtime/src/ui/Roulette.tsx` | Yeni — Figma 10:111 statik render |
-| `programs/han/` | Değişiklik **yok** — derlenir ama V1 demo'da çağrılmaz |
+| `contracts/han/` | Değişiklik **yok** — derlenir ama V1 demo'da çağrılmaz |
 | `sdk/src/escrow.ts` | Değişiklik **yok** — export'lar kalır, V2'de hub'dan kullanılır |
 
 ## Alternatives considered
@@ -81,7 +81,7 @@ Games sayfası (`24:2`) tam taranınca durum değişti: Figma sadece Solo Roulet
 **Gerekçe**:
 - Roulette state machine 4 ekran (~2 saat iş), demo'da gameplay'li mini eğlence
 - Hub kartlarında Pong + Type Race görünüyor → ürün vizyonu net, "coming V1.1" rozeti tutarlı
-- Anchor program (`programs/han/`) zaten derlenip duruyor — V1.1'de çağrılmaya hazır
+- Solidity contract (`contracts/han/`) zaten derlenip duruyor — V1.1'de çağrılmaya hazır
 - Hackathon demo videosunda Solo Roulette gameplay + Games Hub'ta diğer oyunların görünmesi yeterli storytelling
 
 **Implementation impact (revize):**
@@ -101,16 +101,16 @@ Hackathon kapandı, Han indie ürünleştirme yoluna girdi (ADR `2026-05-13-indi
 
 Gerekçe:
 - V1 indie launch'ta tek gelir kaynağı tip komisyonu %3, on-chain stake'li oyunlara dayanmıyor
-- 4-haftalık Sprint 1-4 mainnet hedefli (devnet'te kalsa bile aynı zaman). Pong + Type Race engine + on-chain stake + SAS attestation 2+ hafta ek iş; V1 önce hub+tip+onboarding'i poliş etmeli
+- 4-haftalık Sprint 1-4 mainnet hedefli (Fuji testnet'te kalsa bile aynı zaman). Pong + Type Race engine + on-chain stake + SAS attestation 2+ hafta ek iş; V1 önce hub+tip+onboarding'i poliş etmeli
 - Pong + Type Race **demo değerli ama monetizasyon değerli değil** ilk 100 kullanıcıya kadar. Tournament mode (V1.5 sonu) ile birlikte gelmeleri daha doğal
 
 **Revize edilmiş zaman planı**:
 
 | Versiyon | Kapsam | Tarih hedefi |
 |---|---|---|
-| V1 (devnet) | Hub canlı + tip %3 + profile + onboarding | 4 hafta |
+| V1 (Fuji testnet) | Hub canlı + tip %3 + profile + onboarding | 4 hafta |
 | V1.1 | Bug fix + ilk beta feedback | 6 hafta |
 | V1.5 | Pong + Type Race engine + SAS attestation + Summarizer AI | 3 ay |
 | V2 | Premium abonelik + mainnet (kullanıcıya bağlı) | 6 ay |
 
-Anchor program (`programs/han/`) zaten yazılı ve devnet'e deploy edilmiş durumda kalır — V1.5'te runtime'a bağlanır. Compile-only durumu V1 süresince devam eder.
+Solidity contract (`contracts/han/`) zaten yazılı ve Fuji testnet'e deploy edilmiş durumda kalır — V1.5'te runtime'a bağlanır. Compile-only durumu V1 süresince devam eder.

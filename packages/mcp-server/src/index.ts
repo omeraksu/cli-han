@@ -10,24 +10,15 @@ import 'dotenv/config';
  *   - han_log            push a turn/tool_call/file_edit event
  *   - han_browse         snapshot the lobby
  *   - han_connect        peek the last N events of someone else's session
- *   - han_tip            send a 3%-fee tip on devnet
+ *   - han_tip            send a 3%-fee native-AVAX tip via HanTipRouter
  *
  * Transport: stdio (Claude Code / Cursor / generic MCP clients).
- * State: one active streaming session per process. The first
- * han_stream_start opens a WS to the hub; han_log keeps pushing until
- * han_stream_stop closes it.
  *
  * Env:
- *   HAN_HUB_URL          default http://localhost:3000
- *   HAN_KEYPAIR_PATH     default ~/.config/solana/id.json
- *   SOLANA_RPC_URL       default https://api.devnet.solana.com
- *   SOLANA_CLUSTER       default devnet
- *
- * The streamer wallet is derived from the local Solana keypair — never
- * passed via env. This makes signed handshakes possible and keeps
- * `streamerWallet` consistent with the keypair that actually signs
- * tips. The fee collector pubkey is fetched from the hub `/config`
- * endpoint at tip time; it cannot be overridden by the client.
+ *   HAN_HUB_URL              default http://localhost:3000
+ *   HAN_WALLET_PATH          default ~/.config/han-avax/wallet.json
+ *   AVAX_RPC_URL             default https://api.avax-test.network/ext/bc/C/rpc
+ *   AVAX_NETWORK             default fuji
  *
  * ADR: 2026-05-13-mcp-server-architecture
  */
@@ -36,35 +27,52 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import WebSocket from 'ws';
 import { z } from 'zod';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
 import {
-  loadLocalKeypair,
-  sendTipWithFee,
-} from '@han/sdk/dist/index.js';
+  createPublicClient,
+  createWalletClient,
+  fallback,
+  getAddress,
+  http,
+  type Address,
+  type PrivateKeyAccount,
+} from 'viem';
+import { avalanche, avalancheFuji } from 'viem/chains';
+import { loadLocalAccount, sendTipWithFee } from '@han/sdk/dist/index.js';
 
 const HUB_URL = process.env['HAN_HUB_URL'] ?? 'http://localhost:3000';
-const KEYPAIR_PATH = process.env['HAN_KEYPAIR_PATH'];
-const RPC_URL = process.env['SOLANA_RPC_URL'] ?? 'https://api.devnet.solana.com';
-const CLUSTER = process.env['SOLANA_CLUSTER'] ?? 'devnet';
+const WALLET_PATH = process.env['HAN_WALLET_PATH'];
+const NETWORK = (process.env['AVAX_NETWORK'] ?? 'fuji') as 'fuji' | 'mainnet';
+const RPC_URL =
+  process.env['AVAX_RPC_URL'] ??
+  (NETWORK === 'mainnet'
+    ? 'https://api.avax.network/ext/bc/C/rpc'
+    : 'https://api.avax-test.network/ext/bc/C/rpc');
 
-let cachedKeypair: Keypair | null = null;
-function getKeypair(): Keypair {
-  if (!cachedKeypair) {
-    cachedKeypair = loadLocalKeypair(KEYPAIR_PATH);
+let cachedAccount: PrivateKeyAccount | null = null;
+function getAccount(): PrivateKeyAccount {
+  if (!cachedAccount) {
+    cachedAccount = loadLocalAccount(WALLET_PATH);
   }
-  return cachedKeypair;
+  return cachedAccount;
 }
 
-let cachedHubConfig: { feeCollector: string; cluster: string; tipFeeBps: number } | null = null;
-async function getHubConfig(): Promise<{ feeCollector: string; cluster: string; tipFeeBps: number }> {
+interface HubConfig {
+  network: string;
+  chainId: number;
+  tipRouter: string;
+  feeReceiver: string;
+  hanContract: string | null;
+  tipFeeBps: number;
+}
+
+let cachedHubConfig: HubConfig | null = null;
+async function getHubConfig(): Promise<HubConfig> {
   if (cachedHubConfig) return cachedHubConfig;
   const res = await fetch(`${HUB_URL}/config`);
   if (!res.ok) {
     throw new Error(`hub /config returned ${res.status}: ${await res.text()}`);
   }
-  cachedHubConfig = (await res.json()) as { feeCollector: string; cluster: string; tipFeeBps: number };
+  cachedHubConfig = (await res.json()) as HubConfig;
   return cachedHubConfig;
 }
 
@@ -78,8 +86,9 @@ interface ActiveSession {
 
 let active: ActiveSession | null = null;
 
-function explorerUrl(signature: string): string {
-  return `https://explorer.solana.com/tx/${signature}?cluster=${CLUSTER}`;
+function explorerUrl(hash: string): string {
+  const base = NETWORK === 'mainnet' ? 'https://snowtrace.io' : 'https://testnet.snowtrace.io';
+  return `${base}/tx/${hash}`;
 }
 
 async function openSession(opts: {
@@ -92,10 +101,9 @@ async function openSession(opts: {
     throw new Error(`a session is already live (${active.id}); call han_stream_stop first`);
   }
 
-  const kp = getKeypair();
-  const wallet = kp.publicKey.toBase58();
+  const account = getAccount();
+  const wallet = account.address;
 
-  // 1) request a one-shot nonce
   const nonceRes = await fetch(`${HUB_URL}/sessions/nonce`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -104,13 +112,10 @@ async function openSession(opts: {
   if (!nonceRes.ok) {
     throw new Error(`hub /sessions/nonce returned ${nonceRes.status}: ${await nonceRes.text()}`);
   }
-  const { nonce } = (await nonceRes.json()) as { nonce: string };
+  const { nonce, message } = (await nonceRes.json()) as { nonce: string; message?: string };
+  const signMessage = message ?? `Han login\nnonce: ${nonce}`;
+  const signature = await account.signMessage({ message: signMessage });
 
-  // 2) sign the nonce with the local keypair
-  const nonceBytes = Buffer.from(nonce, 'hex');
-  const signature = bs58.encode(nacl.sign.detached(nonceBytes, kp.secretKey));
-
-  // 3) register the session with the signed proof
   const res = await fetch(`${HUB_URL}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -128,7 +133,6 @@ async function openSession(opts: {
   }
   const body = (await res.json()) as { sessionId: string; code: string; wsToken: string };
 
-  // 4) open the WS, register as streamer with the wsToken
   const wsUrl = HUB_URL.replace(/^http/, 'ws') + '/ws';
   const ws = new WebSocket(wsUrl);
   await new Promise<void>((resolve, reject) => {
@@ -187,10 +191,10 @@ server.tool(
   'han_stream_start',
   'Open a live Han streaming session. The hub registers your wallet, the session shows up in the public lobby, and every han_log call afterwards is broadcast to viewers in real time.',
   {
-    description: z.string().min(1).max(120).optional().describe('Short headline for the lobby card (e.g. "building han v1")'),
-    tool: z.string().min(1).max(32).optional().describe('AI tool name shown to viewers (e.g. "claude-code", "cursor", "aider")'),
-    model: z.string().min(1).max(64).optional().describe('Optional model identifier (e.g. "claude-sonnet-4.6")'),
-    handle: z.string().min(1).max(32).optional().describe('Streamer handle override (default: WALLET prefix)'),
+    description: z.string().min(1).max(120).optional(),
+    tool: z.string().min(1).max(32).optional(),
+    model: z.string().min(1).max(64).optional(),
+    handle: z.string().min(1).max(32).optional(),
   },
   async (args) => {
     const session = await openSession(args);
@@ -207,7 +211,7 @@ server.tool(
 
 server.tool(
   'han_stream_stop',
-  'End the current Han streaming session. After this the session disappears from the lobby and viewers receive a stream_end frame.',
+  'End the current Han streaming session.',
   {},
   async () => {
     if (!active) {
@@ -225,14 +229,14 @@ server.tool(
 
 server.tool(
   'han_log',
-  'Push a single turn event into the live stream. Call this after every meaningful action: a user turn, an assistant turn, a tool call, or a file edit. Viewers in feed mode see these as ⟁ intent / ▸ action lines.',
+  'Push a single turn event into the live stream. Call this after every meaningful action: a user turn, an assistant turn, a tool call, or a file edit.',
   {
-    role: z.enum(['user', 'assistant']).optional().describe('Set for a conversation turn (user or assistant message)'),
-    content: z.string().min(1).max(1000).optional().describe('Required for turn events: the message text'),
-    toolName: z.string().min(1).max(64).optional().describe('Set for a tool_call event: name of the tool being called'),
-    toolArgs: z.string().max(200).optional().describe('Optional short summary of the tool arguments'),
-    filePath: z.string().min(1).max(256).optional().describe('Set for a file_edit event: path that was modified'),
-    fileDiff: z.string().max(500).optional().describe('Optional short summary of the change (e.g. "+12/-3 lines")'),
+    role: z.enum(['user', 'assistant']).optional(),
+    content: z.string().min(1).max(1000).optional(),
+    toolName: z.string().min(1).max(64).optional(),
+    toolArgs: z.string().max(200).optional(),
+    filePath: z.string().min(1).max(256).optional(),
+    fileDiff: z.string().max(500).optional(),
   },
   async (args) => {
     if (!active) {
@@ -270,7 +274,7 @@ server.tool(
       description?: string;
       tool?: string;
       viewerCount: number;
-      tipSol?: number;
+      tipAvax?: number;
       startedAt: number;
     }>;
 
@@ -281,9 +285,9 @@ server.tool(
     const lines = sessions.map((s) => {
       const name = s.streamerName ?? s.id;
       const desc = s.description ?? '—';
-      const tip = (s.tipSol ?? 0).toFixed(3);
+      const tip = (s.tipAvax ?? 0).toFixed(4);
       const age = Math.max(0, Math.floor((Date.now() - s.startedAt) / 60_000));
-      return `  · ${name}  ·  ${desc}  ·  ${s.viewerCount} viewers · ${age}min · ${s.tool ?? 'shell'}  ·  🔥 ${tip} SOL  ·  id ${s.id}`;
+      return `  · ${name}  ·  ${desc}  ·  ${s.viewerCount} viewers · ${age}min · ${s.tool ?? 'shell'}  ·  🔥 ${tip} AVAX  ·  id ${s.id}`;
     });
     return {
       content: [
@@ -298,9 +302,9 @@ server.tool(
 
 server.tool(
   'han_connect',
-  'Peek the most recent events from another live Han session. Returns the last ~30 turn/tool_call/file_edit lines so the AI can describe what that streamer is up to.',
+  'Peek a live Han session: streamer name, description, viewer count, total tips so far.',
   {
-    sessionId: z.string().min(1).max(64).describe('The session id from han_browse (e.g. "9mdv.a436")'),
+    sessionId: z.string().min(1).max(64),
   },
   async ({ sessionId }) => {
     const res = await fetch(`${HUB_URL}/sessions/${sessionId}`);
@@ -310,14 +314,10 @@ server.tool(
     const meta = (await res.json()) as {
       streamerName?: string;
       description?: string;
-      tipSol?: number;
+      tipAvax?: number;
       viewerCount?: number;
     };
 
-    // The hub does not yet expose a cache snapshot endpoint over REST,
-    // so v1 returns whatever session metadata is available + the live
-    // viewer count. Real-time event peek lands in V1.1 as a hub /events
-    // route.
     return {
       content: [
         {
@@ -325,7 +325,7 @@ server.tool(
           text:
             `▮ ${meta.streamerName ?? sessionId}\n` +
             `  ${meta.description ?? '—'}\n` +
-            `  ◎ ${meta.viewerCount ?? 0} viewers · 🔥 ${(meta.tipSol ?? 0).toFixed(3)} SOL\n\n` +
+            `  ◎ ${meta.viewerCount ?? 0} viewers · 🔥 ${(meta.tipAvax ?? 0).toFixed(4)} AVAX\n\n` +
             `(live event tail comes in V1.1; for now open a viewer terminal with \`pnpm browse\` + ENTER to watch in real time.)`,
         },
       ],
@@ -335,38 +335,43 @@ server.tool(
 
 server.tool(
   'han_tip',
-  'Send a tip from the local wallet to a streamer on Solana devnet. Han keeps 3% as commission (see ADR 2026-05-13-tip-fee-architecture) and the rest goes to the streamer. Returns the on-chain signature + explorer link.',
+  'Send a native-AVAX tip from the local wallet to a streamer via HanTipRouter. Han keeps 3% as commission (see ADR 2026-05-13-tip-fee-architecture). Returns the on-chain tx hash + Snowtrace link.',
   {
-    to: z.string().min(32).max(64).describe('Recipient wallet pubkey (Solana base58)'),
-    amountSol: z.number().positive().max(10).describe('Tip amount in SOL (V1 max 10)'),
-    sessionId: z.string().min(1).max(64).optional().describe('Session id so the hub can attribute the tip to a live stream'),
-    memo: z.string().max(120).optional(),
+    to: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .describe('Recipient wallet address (0x...)'),
+    amountAvax: z
+      .union([z.string(), z.number()])
+      .describe('Tip amount in AVAX, e.g. "0.05"'),
+    sessionId: z.string().min(1).max(64).optional(),
   },
-  async ({ to, amountSol, sessionId, memo }) => {
+  async ({ to, amountAvax, sessionId }) => {
     const hubConfig = await getHubConfig();
-    const connection = new Connection(RPC_URL, 'confirmed');
-    const viewer = getKeypair();
+    const chain = NETWORK === 'mainnet' ? avalanche : avalancheFuji;
+    const transport = fallback([http(RPC_URL, { retryCount: 2 })], { rank: false });
+    const publicClient = createPublicClient({ chain, transport });
+    const account = getAccount();
+    const walletClient = createWalletClient({ account, chain, transport });
     const result = await sendTipWithFee({
-      connection,
-      viewer,
-      streamer: new PublicKey(to),
-      feeCollector: new PublicKey(hubConfig.feeCollector),
-      amountSol,
-      memo,
+      publicClient,
+      walletClient,
+      router: getAddress(hubConfig.tipRouter) as Address,
+      streamer: getAddress(to) as Address,
+      amountAvax: String(amountAvax),
     });
 
-    // best-effort hub notification so /sessions tipSol updates
     if (sessionId) {
       void fetch(`${HUB_URL}/tips`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          fromWallet: viewer.publicKey.toBase58(),
-          toWallet: to,
-          feeCollector: hubConfig.feeCollector,
-          amountLamports: result.amountLamports,
-          txSignature: result.signature,
+          fromWallet: account.address,
+          toWallet: getAddress(to),
+          router: getAddress(hubConfig.tipRouter),
+          amountWei: result.amountWei.toString(),
+          txHash: result.hash,
         }),
       }).catch(() => {
         /* hub down or rejected — the chain tx still landed */
@@ -378,10 +383,10 @@ server.tool(
         {
           type: 'text',
           text:
-            `✓ tipped ${amountSol} SOL\n` +
-            `  ${result.streamerLamports} lamports to streamer · ${result.feeLamports} lamports fee\n` +
-            `  sig: ${result.signature}\n` +
-            `  ${explorerUrl(result.signature)}`,
+            `✓ tipped ${amountAvax} AVAX\n` +
+            `  streamer ${result.streamerWei} wei · fee ${result.feeWei} wei\n` +
+            `  tx: ${result.hash}\n` +
+            `  ${explorerUrl(result.hash)}`,
         },
       ],
     };
@@ -391,7 +396,6 @@ server.tool(
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // stderr (not stdout — stdout is MCP protocol)
   process.stderr.write('[han-mcp] ready on stdio · hub=' + HUB_URL + '\n');
 }
 

@@ -1,25 +1,46 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { program } from 'commander';
-import { loadLocalKeypair } from '@han/sdk/dist/index.js';
+import {
+  createAndSaveLocalAccount,
+  defaultWalletPath,
+  loadLocalAccount,
+  walletExists,
+} from '@han/sdk/dist/index.js';
 
 const HUB_URL = process.env['HAN_HUB_URL'] ?? 'http://localhost:3000';
-const KEYPAIR_PATH = process.env['HAN_KEYPAIR_PATH'];
-const WALLET = process.env['WALLET_ADDRESS'] ?? 'demo-wallet';
+const WALLET_PATH = process.env['HAN_WALLET_PATH'];
 const HANDLE = process.env['HAN_HANDLE'];
 const DESCRIPTION = process.env['HAN_DESCRIPTION'];
 
 program.name('han').version('0.1.0');
+
+function ensureWalletOrExit(path?: string) {
+  const resolved = path ?? defaultWalletPath();
+  if (!walletExists(resolved)) {
+    if (process.env['HAN_AUTO_CREATE_WALLET'] === '1') {
+      const { account, path: created } = createAndSaveLocalAccount(resolved);
+      console.error(`[han] new wallet created at ${created}`);
+      console.error(`[han] address: ${account.address}`);
+      console.error(`[han] fund with Fuji AVAX: https://faucet.avax.network/`);
+      return loadLocalAccount(created);
+    }
+    console.error(`[han] no wallet at ${resolved}`);
+    console.error(`[han] run \`HAN_AUTO_CREATE_WALLET=1 han stream\` to generate one`);
+    process.exit(1);
+  }
+  return loadLocalAccount(resolved);
+}
 
 program
   .command('stream [command]')
   .description('AI tool session yayinla')
   .action(async (command?: string) => {
     const { startStreamer } = await import('./streamer/index.js');
-    const walletKeypair = loadLocalKeypair(KEYPAIR_PATH);
+    const account = ensureWalletOrExit(WALLET_PATH);
     await startStreamer({
       hubUrl: HUB_URL,
-      walletKeypair,
+      account,
       command,
       streamerName: HANDLE,
       description: DESCRIPTION,
@@ -42,11 +63,10 @@ program
         interactive: true,
         onSelect: (session: { id: string }) => {
           unmount();
-          // jump directly into the picked session
           startViewer({
             hubUrl: HUB_URL,
             sessionId: session.id,
-            walletAddress: WALLET,
+            walletAddress: process.env['WALLET_ADDRESS'] ?? '0x0000000000000000000000000000000000000000',
             handle: HANDLE,
           });
         },
@@ -63,7 +83,7 @@ program
     await startViewer({
       hubUrl: HUB_URL,
       sessionId: code,
-      walletAddress: WALLET,
+      walletAddress: process.env['WALLET_ADDRESS'] ?? '0x0000000000000000000000000000000000000000',
       handle: HANDLE,
     });
   });

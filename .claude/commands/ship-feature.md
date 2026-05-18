@@ -7,8 +7,8 @@ Plan: $ARGUMENTS
 
 Plan'da belirlenen adımları sırayla takip et. Her agent kendi paketini yeşil bitirir bitirmez Conventional Commit atar. Sıradaki agent temiz tree'de başlar. Tipik akış:
 
-1. **anchor-engineer** programs/ değişikliklerini yapar (varsa) → `anchor build` yeşilse `feat(programs): ...` veya `chore(programs): ...` commit
-2. **solana-client-engineer** SDK güncellemesini yapar (varsa) → SDK build + test yeşilse `feat(sdk): ...` commit
+1. **contract-engineer** contracts/ değişikliklerini yapar (varsa) → `forge build` yeşilse `feat(programs): ...` veya `chore(programs): ...` commit
+2. **evm-client-engineer** SDK güncellemesini yapar (varsa) → SDK build + test yeşilse `feat(sdk): ...` commit
 3. **hub-engineer** backend logic'i ekler → hub build + test yeşilse `feat(hub): ...` commit
 4. **summarizer-engineer** pipeline değişikliği yapar (varsa) → synthetic stream test yeşilse `feat(summarizer): ...` commit
 5. **game-engineer** oyun değişikliği yapar (varsa) → state machine test yeşilse `feat(games): ...` commit

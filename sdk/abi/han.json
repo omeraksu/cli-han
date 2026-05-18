@@ -1,0 +1,797 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_feeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "_feeReceiver",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_authority",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "MAX_ENTRY_FEE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_FEE_BPS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_PLAYERS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MIN_ENTRY_FEE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "ROOM_TIMEOUT",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_CANCELLED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_FILLING",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_FINISHED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_READY",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_SETTLED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_TIMED_OUT",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "authority",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "cancelGame",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "claimRefund",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createGameRoom",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "gameType",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "entryFee",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "maxPlayers",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "feeBps",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "feeReceiver",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPlayers",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]",
+        "internalType": "address[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRoom",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "host",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "gameType",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "entryFee",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "maxPlayers",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "playerCount",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "refundClaimedBitmap",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "createdAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "winner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "joinGame",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "roomExists",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "settleGame",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "winner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "timeoutRefund",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateConfig",
+    "inputs": [
+      {
+        "name": "newFeeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "newFeeReceiver",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "newAuthority",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "ConfigUpdated",
+    "inputs": [
+      {
+        "name": "feeBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeReceiver",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "authority",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "GameCancelled",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "GameRoomCreated",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "host",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "gameType",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "entryFee",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "maxPlayers",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "GameSettled",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "winner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "payout",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PlayerJoined",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "player",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "playerIndex",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RefundClaimed",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "player",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TimeoutRefundClaimed",
+    "inputs": [
+      {
+        "name": "roomId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "player",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AlreadyRefunded",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AlreadyResolved",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "CannotCancel",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DuplicatePlayer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntryFeeTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntryFeeTooLow",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FeeBpsTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "GameNotFilling",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "GameNotFinished",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidMaxPlayers",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidWinner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoRefundAvailable",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAPlayer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RefundAlreadyClaimed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoomAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoomFull",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoomNotCancelled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TimeoutNotReached",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedHost",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedSettler",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WrongEntryFee",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroAddress",
+    "inputs": []
+  }
+]

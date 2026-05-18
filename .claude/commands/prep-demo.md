@@ -23,7 +23,7 @@ Demo akışında olması gerekenler:
 - İki izleyicinin Pong odası açıp oynaması
 - Stake yatırma, kazanan settlement
 - Tip atma akışı
-- Devnet explorer'da TX doğrulaması
+- Fuji testnet explorer'da TX doğrulaması
 
 Eğer feature kırıksa **debug-specialist**'i çağır, hızlı düzelt veya demo'dan çıkar.
 

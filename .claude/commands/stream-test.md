@@ -16,13 +16,13 @@ Adımlar:
 8. **Raw mode kontrolü**: izleyici `/raw` ile ham output'u görüyor mu
 9. **Chat kontrolü**: izleyici chat'e mesaj at, yayıncı görsün
 10. **Game odası**: izleyici `/play pong` ile oda aç, başka izleyici eşleşse (test için ikinci izleyici client)
-11. **Solana flow**: oyun bitince settle TX devnet explorer'da görünüyor mu
+11. **Solana flow**: oyun bitince settle TX Fuji testnet explorer'da görünüyor mu
 
 Bir adım kırılırsa hangisi olduğu rapor et, **debug-specialist**'e delegate et.
 
 Başarılıysa "stream pipeline yeşil, demo'ya hazır" raporu.
 
 Notlar:
-- Test için Anchor program devnet'e deploy edilmiş olmalı (`/deploy-devnet` ile önce)
-- Devnet wallet'ında en az 0.1 SOL olmalı (test stake için)
+- Test için Anchor program Fuji testnet'e deploy edilmiş olmalı (`/deploy-Fuji testnet` ile önce)
+- Fuji testnet wallet'ında en az 0.1 SOL olmalı (test stake için)
 - İkinci izleyici client'ı için ek terminal pencere lazım

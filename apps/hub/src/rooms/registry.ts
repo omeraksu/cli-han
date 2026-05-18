@@ -12,7 +12,7 @@ const TTL_CHANNEL = 0;
 const TTL_ADHOC_SECONDS = 86_400;
 const TTL_STREAM_SECONDS = 3600;
 
-const LAMPORTS_PER_SOL = 1_000_000_000;
+const WEI_PER_AVAX = 10n ** 18n;
 
 function metaKey(roomId: string): string {
   return `${KEY_META_PREFIX}${roomId}`;
@@ -89,7 +89,7 @@ export class RoomRegistry {
       createdAt: now,
       startedAt: now,
       memberCount: 0,
-      tipSol: 0,
+      tipAvax: 0,
     };
     await this.write(room);
     return room;
@@ -177,14 +177,14 @@ export class RoomRegistry {
     }));
   }
 
-  async addTipLamports(id: string, lamports: number): Promise<number | null> {
+  async addTipWei(id: string, wei: bigint): Promise<number | null> {
     const updated = await this.update(id, (r) => {
       if (r.kind !== 'stream') return r;
-      const current = r.tipSol ?? 0;
-      return { ...r, tipSol: current + lamports / LAMPORTS_PER_SOL };
+      const current = r.tipAvax ?? 0;
+      return { ...r, tipAvax: current + Number(wei) / Number(WEI_PER_AVAX) };
     });
     if (!updated || updated.kind !== 'stream') return null;
-    return updated.tipSol ?? null;
+    return updated.tipAvax ?? null;
   }
 
   /** Used by Faz 3 stream-lifecycle to detect orphaned stream-rooms. */

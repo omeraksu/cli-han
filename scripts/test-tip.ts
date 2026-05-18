@@ -1,61 +1,52 @@
 #!/usr/bin/env node
-// Run with: pnpm --filter @han/scripts tip
-// or:       cd scripts && node --env-file=../.env --experimental-strip-types --no-warnings test-tip.ts
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-// Direct paths so we don't traverse client.js / anchor-CJS named exports.
-import { loadLocalKeypair } from '@han/sdk/dist/wallet/local-keypair.js';
-import { sendTipWithFee } from '@han/sdk/dist/tip.js';
+// Quick smoke test: send a 0.001 AVAX tip via HanTipRouter on Fuji.
+//
+// Env required:
+//   HAN_TIP_ROUTER_ADDRESS  0x...
+//   STREAMER_ADDRESS         0x... (recipient)
+//   HAN_WALLET_PATH          optional, default ~/.config/han-avax/wallet.json
+//
+// Usage: pnpm tip
 
-async function main(): Promise<void> {
-  const rpcUrl = process.env['SOLANA_RPC_URL'] ?? 'https://api.devnet.solana.com';
-  const feeCollectorEnv = process.env['FEE_COLLECTOR_PUBKEY'];
-  if (!feeCollectorEnv) {
-    throw new Error('FEE_COLLECTOR_PUBKEY env not set');
-  }
+import { createPublicClient, createWalletClient, fallback, http, getAddress, type Address } from 'viem';
+import { avalancheFuji } from 'viem/chains';
+import { loadLocalAccount, sendTipWithFee } from '@han/sdk/dist/index.js';
 
-  const conn = new Connection(rpcUrl, 'confirmed');
-  const viewer = loadLocalKeypair();
-  const streamer = new PublicKey(process.argv[2] ?? viewer.publicKey.toBase58());
-  const feeCollector = new PublicKey(feeCollectorEnv);
-  const amountSol = Number(process.argv[3] ?? 0.005);
+async function main() {
+  const router = getAddress(process.env['HAN_TIP_ROUTER_ADDRESS']!) as Address;
+  const streamer = getAddress(process.env['STREAMER_ADDRESS']!) as Address;
+  const amountAvax = process.env['AMOUNT_AVAX'] ?? '0.001';
 
-  console.log('RPC:           ', rpcUrl);
-  console.log('Viewer:        ', viewer.publicKey.toBase58());
-  console.log('Streamer:      ', streamer.toBase58());
-  console.log('Fee collector: ', feeCollector.toBase58());
-  console.log('Amount:        ', `${amountSol} SOL`);
+  const account = loadLocalAccount(process.env['HAN_WALLET_PATH']);
+  const transport = fallback(
+    [http(process.env['AVAX_RPC_URL'] ?? 'https://api.avax-test.network/ext/bc/C/rpc')],
+    { rank: false },
+  );
+  const publicClient = createPublicClient({ chain: avalancheFuji, transport });
+  const walletClient = createWalletClient({ account, chain: avalancheFuji, transport });
 
-  const balanceBefore = await conn.getBalance(feeCollector, 'confirmed');
-  console.log('Fee balance before:', balanceBefore / LAMPORTS_PER_SOL, 'SOL');
+  console.log(`from   ${account.address}`);
+  console.log(`to     ${streamer}`);
+  console.log(`router ${router}`);
+  console.log(`amount ${amountAvax} AVAX`);
 
   const result = await sendTipWithFee({
-    connection: conn,
-    viewer,
+    publicClient,
+    walletClient,
+    router,
     streamer,
-    feeCollector,
-    amountSol,
-    memo: 'Han test tip with fee',
+    amountAvax,
   });
 
-  console.log('');
-  console.log('✓ Signature:  ', result.signature);
-  console.log('  Fee:        ', result.feeLamports, 'lamports', `(${result.feeLamports / LAMPORTS_PER_SOL} SOL)`);
-  console.log('  To streamer:', result.streamerLamports, 'lamports', `(${result.streamerLamports / LAMPORTS_PER_SOL} SOL)`);
-  console.log('  Explorer:   ', `https://explorer.solana.com/tx/${result.signature}?cluster=devnet`);
-
-  const balanceAfter = await conn.getBalance(feeCollector, 'confirmed');
-  const delta = balanceAfter - balanceBefore;
-  console.log('Fee balance after:', balanceAfter / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Delta:            ', delta, 'lamports');
-  if (Math.abs(delta - result.feeLamports) <= 1) {
-    console.log('✓ Fee collector balance updated by expected amount');
-  } else {
-    console.error(`✗ Expected delta ${result.feeLamports}, got ${delta}`);
-    process.exitCode = 1;
-  }
+  console.log('---');
+  console.log(`hash         ${result.hash}`);
+  console.log(`amount wei   ${result.amountWei}`);
+  console.log(`fee wei      ${result.feeWei}`);
+  console.log(`streamer wei ${result.streamerWei}`);
+  console.log(`explorer     https://testnet.snowtrace.io/tx/${result.hash}`);
 }
 
 main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
+  console.error('test-tip failed:', err);
+  process.exit(1);
 });

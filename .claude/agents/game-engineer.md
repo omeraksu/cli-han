@@ -59,7 +59,7 @@ Bu contract sayesinde her oyun aynı engine içinde çalışır. Yeni oyun eklem
 }
 ```
 
-Bu obje hub'a teslim edilir, hub solana-client-engineer'ın yazdığı SDK ile attestation'ı atar ve pot'u kazanan'a transfer eder.
+Bu obje hub'a teslim edilir, hub evm-client-engineer'ın yazdığı SDK ile `Han.settleGame()` çağırır, pot otomatik split olur, `GameSettled` event Snowtrace'te queryable.
 
 **Game SDK** (V2 hazırlığı, V1'de skeleton). Topluluğun yeni oyun yazabilmesi için:
 
@@ -83,7 +83,7 @@ Plug-in style. Hub başlangıçta tüm `games/` klasörünü tarar, manifest oku
 
 Sadece `apps/hub/games/` ve `apps/runtime/games/` altındaki dosyaları değiştirirsin. Hub'a entegrasyon noktaları (room manager, WebSocket route) hub-engineer ile birlikte. Game UI render detayı ui-designer ile koordineli.
 
-Anchor program çağrılarını sen yapmazsın. Oyun bitince `GameResult` üret, hub'a ver. Hub solana-client-engineer SDK'sıyla program'a yazar.
+Solidity contract çağrılarını sen yapmazsın. Oyun bitince `GameResult` üret, hub'a ver. Hub evm-client-engineer SDK'sıyla program'a yazar.
 
 Server-authoritative kuralı kesin. Client asla state mutate etmez, sadece input gönderir, state çizer. Hile önleme V1'de minimal ama mimari hile zor olacak şekilde.
 

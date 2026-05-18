@@ -36,6 +36,7 @@ export interface CreateSessionResponse {
 
 export interface RequestNonceResponse {
   nonce: string;
+  message?: string;
   expiresAt: number;
   ttlSeconds: number;
 }

@@ -19,13 +19,6 @@ export class TipError extends HanSdkError {
   }
 }
 
-export class AttestationError extends HanSdkError {
-  constructor(message: string, cause?: unknown) {
-    super(message, cause);
-    this.name = 'AttestationError';
-  }
-}
-
 export class WalletError extends HanSdkError {
   constructor(message: string, cause?: unknown) {
     super(message, cause);

@@ -1,138 +1,82 @@
 # 2026-05-05, RPC Endpoint Fallback Strategy
 
+## Status
+
+Accepted, 2026-05-05. Revised 2026-05-18 for Avalanche C-Chain port.
+
 ## Context
 
-Han'ın hem hub backend'i hem runtime client'ı Solana RPC ile konuşur. Tipik akışlar: TX gönderme, balance okuma, account fetch, signature confirmation.
+Han'ın hem hub backend'i hem runtime client'ı Avalanche RPC ile konuşur. Tipik akışlar: TX gönderme, balance okuma, contract read, receipt fetch.
 
-V1 mimaride sadece tek RPC tanımlı: `https://api.devnet.solana.com`. Bu Solana'nın public devnet endpoint'i, ücretsiz ama:
+V1 mimaride sadece tek RPC tanımlı: `https://api.avax-test.network/ext/bc/C/rpc`. Bu Avalanche Foundation'un public Fuji endpoint'i, ücretsiz ama:
 
-- Rate limit (saniyede 10 request gibi)
+- Rate limit (saniyede ~10-20 request)
 - Sıkışıklık zamanlarında throttle
-- Hackathon demo gününde **çok kullanıcı bu endpoint'i çekecek**, jüri demosu sırasında patlama riski yüksek
-
-Validation raporu (2026-05-05) demo gününde RPC rate limit sorununu somut bir risk olarak işaret etti.
+- Demo gününde çok kullanıcı bu endpoint'i çekerse patlama riski
 
 ## Decision
 
-**Multi-RPC fallback stratejisi V1'e girer.**
+**Multi-RPC fallback stratejisi V1'e girer. viem `fallback` transport kullanılır.**
 
-Provider listesi:
-1. **Birincil**: `https://api.devnet.solana.com` (Solana Foundation)
-2. **İkincil (fallback)**: Helius devnet endpoint (`HELIUS_RPC_URL` env var, key gerekir)
-3. **Üçüncül (acil)**: QuickNode veya Alchemy (V1.5'te eklenebilir)
+Provider listesi (öncelik sırası):
+1. `https://api.avax-test.network/ext/bc/C/rpc` (official Avalanche Foundation)
+2. `https://avalanche-fuji-c-chain-rpc.publicnode.com` (PublicNode)
+3. `https://avalanche-fuji.drpc.org` (dRPC)
+4. **Opsiyonel ücretli**: Ankr / QuickNode key (`AVAX_RPC_FALLBACK_URLS` env)
 
-Strateji **active-passive**, load balancing değil. Birincil her zaman ilk denenir, başarısız olursa ikinciye düşer. Round-robin veya weighted yok (basit tutuyoruz).
+Strateji **active-passive**, load balancing değil. Birincil her zaman ilk denenir, başarısız olursa ikinciye düşer (viem `fallback` `rank: false`).
 
 ## Implementation
 
-`apps/hub/src/solana/rpc-client.ts` ve `apps/runtime/src/wallet/rpc-client.ts` paylaşılabilir bir helper:
+SDK helper `sdk/src/rpc-client.ts`:
 
 ```typescript
-import { Connection, ConnectionConfig } from '@solana/web3.js';
+import { fallback, http, type Transport } from 'viem';
+import { chainFor, rpcUrlsFor, type HanNetwork } from './chain.js';
 
-interface RpcEndpoint {
-  url: string;
-  name: string;
-  priority: number;
-}
-
-class FailoverConnection {
-  private endpoints: RpcEndpoint[];
-  private current: number = 0;
-  private failureCount: Map<string, number> = new Map();
-  
-  constructor(endpoints: RpcEndpoint[]) {
-    this.endpoints = endpoints.sort((a, b) => a.priority - b.priority);
-  }
-  
-  async call<T>(operation: (conn: Connection) => Promise<T>): Promise<T> {
-    const maxAttempts = this.endpoints.length;
-    let lastError: Error | null = null;
-    
-    for (let i = 0; i < maxAttempts; i++) {
-      const endpoint = this.endpoints[this.current];
-      const conn = new Connection(endpoint.url, 'confirmed');
-      
-      try {
-        const result = await operation(conn);
-        // Başarılıysa failure count sıfırla
-        this.failureCount.set(endpoint.name, 0);
-        return result;
-      } catch (err) {
-        lastError = err as Error;
-        const fc = (this.failureCount.get(endpoint.name) ?? 0) + 1;
-        this.failureCount.set(endpoint.name, fc);
-        
-        // Rate limit veya 5xx ise hemen geç
-        if (this.isRetryable(err)) {
-          this.current = (this.current + 1) % this.endpoints.length;
-          continue;
-        }
-        
-        throw err; // 4xx (auth, invalid request) ise fallback yapma
-      }
-    }
-    
-    throw new RpcError(`All RPC endpoints failed`, lastError);
-  }
-  
-  private isRetryable(err: unknown): boolean {
-    const msg = (err as Error).message.toLowerCase();
-    return msg.includes('429') || msg.includes('rate limit') || 
-           msg.includes('503') || msg.includes('502') || 
-           msg.includes('timeout') || msg.includes('econnreset');
-  }
+export function createHanTransport(opts: {
+  network: HanNetwork;
+  extraUrls?: string[];
+  retryCount?: number;
+  rank?: boolean;
+}): Transport {
+  const urls = [...rpcUrlsFor(opts.network), ...(opts.extraUrls ?? [])];
+  return fallback(
+    urls.map((u) => http(u, { retryCount: opts.retryCount ?? 2 })),
+    { rank: opts.rank ?? false },
+  );
 }
 ```
 
-Kullanım:
+Hub ve runtime aynı helper'ı kullanır. Custom `FailoverConnection` class'ı yok — viem built-in.
+
+## Hangi hatalar retryable
+
+viem default retry HTTP 5xx, network error, timeout. 429 (rate limit) viem 2.21+ otomatik retry yapar. 4xx auth hataları throw.
+
+## Write işlemleri için dikkat
+
+`fallback` transport'u **write client**'ta direkt kullanmak nonce çakışmasına yol açabilir: ilk RPC TX'i kabul eder, ikinci RPC `nonce too low` döndürür ve fallback patlar.
+
+**Çözüm**: write client'ta pin'lenmiş tek transport, read client'ta fallback:
+
 ```typescript
-const rpc = new FailoverConnection([
-  { url: process.env.SOLANA_RPC_URL!, name: 'devnet-official', priority: 1 },
-  { url: process.env.HELIUS_RPC_URL!, name: 'helius', priority: 2 },
-]);
+const readTransport = createHanTransport({ network: 'fuji' });
+const writeTransport = http(process.env['AVAX_RPC_URL']!);
 
-const sig = await rpc.call(conn => sendAndConfirm(conn, tx, [signer]));
+const publicClient = createPublicClient({ chain, transport: readTransport });
+const walletClient = createWalletClient({ account, chain, transport: writeTransport });
 ```
 
-## Environment
+V2: Smart RPC routing (nonce-aware fallback).
 
-`.env.example` güncelleniyor:
+## Test stratejisi
 
-```
-# Birincil
-SOLANA_RPC_URL=https://api.devnet.solana.com
+`/avax-flow-test` adım 3:
+- Birincil endpoint'e basit `getBlockNumber` call
+- Geçici olarak birincili bozuk URL ile değiştir, request ikincisine düşmeli
+- Failover transparent olmalı
 
-# İkincil (Helius, demo öncesi key al)
-HELIUS_API_KEY=
-HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}
+## Maliyet
 
-# Cluster
-SOLANA_CLUSTER=devnet
-```
-
-## Consequences
-
-**Kazandıkları:**
-- Demo günü resilient
-- Tek bir endpoint patlarsa kullanıcı fark etmez
-- Hub backend de aynı stratejiyi kullanır, server-side reliability artar
-
-**Kaybettikleri:**
-- Helius API key alınmalı (ücretsiz tier var, hackathon için yeterli)
-- Test'te de iki endpoint mock'lanmalı
-- Code complexity biraz artar (~100 satır helper)
-
-**Demo öncesi:**
-1. Helius hesabı aç, devnet API key al
-2. `.env` dosyasına ekle, `.env.example` güncelle
-3. `solana-flow-test` komutuyla failover'ı doğrula (birincil endpoint'i kasten patlat)
-
-## Status
-
-Accepted, 2026-05-05. Implementation owner: solana-client-engineer (helper yazımı), hub-engineer (entegrasyon).
-
-## References
-
-- solana.new validate-idea raporu (2026-05-05)
-- Helius docs: https://docs.helius.dev/
+Public endpoint'ler ücretsiz. Ankr/QuickNode aylık $50-100. V1'de gerek yok, V1.5'te beta tester sayısı arttıkça eklenir.

@@ -32,7 +32,7 @@ Hızlı reddetmezsin, hızlı onaylamazsın. Önce kullanıcının söylediğini
 
 Eğer bilgi eksikse, varsayım yapmazsın, sorarsın. Bir cümlelik açık uçlu soru ile.
 
-Kod yazmaya başlamadan önce dosya yapısını kontrol edersin. Mevcut `apps/runtime/`, `apps/hub/`, `programs/`, `sdk/` klasörlerinin durumunu, son commit'leri, açık PR'ları okursun.
+Kod yazmaya başlamadan önce dosya yapısını kontrol edersin. Mevcut `apps/runtime/`, `apps/hub/`, `contracts/`, `sdk/` klasörlerinin durumunu, son commit'leri, açık PR'ları okursun.
 
 ## Yazım
 

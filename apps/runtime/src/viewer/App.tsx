@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { loadLocalKeypair, sendTipWithFee } from '@han/sdk';
+import { createPublicClient, createWalletClient, fallback, http, getAddress, type Address } from 'viem';
+import { avalanche, avalancheFuji } from 'viem/chains';
+import { loadLocalAccount, sendTipWithFee } from '@han/sdk';
 import { Screen, Titlebar, SplitPane, Footer } from '../ui/Layout.js';
 import { BroadcastFeed } from '../ui/BroadcastFeed.js';
 import { ChatPanel } from '../ui/ChatPanel.js';
@@ -51,7 +52,7 @@ interface TipOverlayState {
   errorMessage?: string;
 }
 
-const DEFAULT_TIP_SOL = 0.005;
+const DEFAULT_TIP_AVAX = 0.005;
 
 export function App({
   client,
@@ -82,7 +83,7 @@ export function App({
   }, [client]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [tip, setTip] = useState<TipOverlayState>({
-    amount: DEFAULT_TIP_SOL,
+    amount: DEFAULT_TIP_AVAX,
     status: 'confirm',
   });
   const [profileOverlay, setProfileOverlay] = useState<ProfileOverlayState | null>(null);
@@ -114,46 +115,53 @@ export function App({
       setTip((t) => ({ ...t, status: 'error', errorMessage: 'streamer wallet unknown' }));
       return;
     }
-    const feeCollectorPubkey = process.env['FEE_COLLECTOR_PUBKEY'];
-    if (!feeCollectorPubkey) {
+    const routerAddress = process.env['HAN_TIP_ROUTER_ADDRESS'];
+    if (!routerAddress) {
       setTip((t) => ({
         ...t,
         status: 'error',
-        errorMessage: 'FEE_COLLECTOR_PUBKEY env missing',
+        errorMessage: 'HAN_TIP_ROUTER_ADDRESS env missing',
       }));
       return;
     }
 
     setTip((t) => ({ ...t, status: 'pending' }));
     try {
-      const rpcUrl = process.env['SOLANA_RPC_URL'] ?? 'https://api.devnet.solana.com';
-      const connection = new Connection(rpcUrl, 'confirmed');
-      const viewer = loadLocalKeypair();
+      const network = (process.env['AVAX_NETWORK'] ?? 'fuji') as 'fuji' | 'mainnet';
+      const chain = network === 'mainnet' ? avalanche : avalancheFuji;
+      const rpcUrl =
+        process.env['AVAX_RPC_URL'] ??
+        (network === 'mainnet'
+          ? 'https://api.avax.network/ext/bc/C/rpc'
+          : 'https://api.avax-test.network/ext/bc/C/rpc');
+      const transport = fallback([http(rpcUrl, { retryCount: 2 })], { rank: false });
+      const publicClient = createPublicClient({ chain, transport });
+      const account = loadLocalAccount();
+      const walletClient = createWalletClient({ account, chain, transport });
       const result = await sendTipWithFee({
-        connection,
-        viewer,
-        streamer: new PublicKey(streamerWallet),
-        feeCollector: new PublicKey(feeCollectorPubkey),
-        amountSol: tip.amount,
+        publicClient,
+        walletClient,
+        router: getAddress(routerAddress) as Address,
+        streamer: getAddress(streamerWallet) as Address,
+        amountAvax: String(tip.amount),
       });
 
-      // notify hub so it persists + bumps lobby tipSol
       void fetch(`${hubUrl}/tips`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: sessionCode,
-          fromWallet: viewer.publicKey.toBase58(),
-          toWallet: streamerWallet,
-          feeCollector: feeCollectorPubkey,
-          amountLamports: result.amountLamports,
-          txSignature: result.signature,
+          fromWallet: account.address,
+          toWallet: getAddress(streamerWallet),
+          router: getAddress(routerAddress),
+          amountWei: result.amountWei.toString(),
+          txHash: result.hash,
         }),
       }).catch(() => {
         // hub down or rejected — the chain tx still went through
       });
 
-      setTip((t) => ({ ...t, status: 'sent', signature: result.signature }));
+      setTip((t) => ({ ...t, status: 'sent', signature: result.hash }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setTip((t) => ({ ...t, status: 'error', errorMessage: message }));
@@ -162,7 +170,7 @@ export function App({
 
   const handleTipCancel = useCallback(() => {
     setOverlay(null);
-    setTip({ amount: DEFAULT_TIP_SOL, status: 'confirm' });
+    setTip({ amount: DEFAULT_TIP_AVAX, status: 'confirm' });
   }, []);
 
   const handleSend = useCallback(
@@ -186,7 +194,7 @@ export function App({
           return;
         }
         if (cmd === 'tip') {
-          const amount = Number(parts[1] ?? DEFAULT_TIP_SOL);
+          const amount = Number(parts[1] ?? DEFAULT_TIP_AVAX);
           if (Number.isFinite(amount) && amount > 0) {
             setTip({ amount, status: 'confirm' });
             setOverlay('tip');
@@ -276,7 +284,7 @@ export function App({
         <Roulette
           onShare={handleShareToChat}
           onTip={() => {
-            setTip({ amount: DEFAULT_TIP_SOL, status: 'confirm' });
+            setTip({ amount: DEFAULT_TIP_AVAX, status: 'confirm' });
             setOverlay('tip');
           }}
           onQuit={() => setOverlay('games-hub')}
@@ -320,7 +328,7 @@ export function App({
             setProfileOverlay((p) => (p ? { view: 'view-self', profile: next } : p))
           }
           onTip={() => {
-            setTip({ amount: DEFAULT_TIP_SOL, status: 'confirm' });
+            setTip({ amount: DEFAULT_TIP_AVAX, status: 'confirm' });
             setOverlay('tip');
           }}
           onWatchStream={() => {
@@ -336,12 +344,12 @@ export function App({
           recipient={streamerName}
           recipientPubkey={streamerWallet}
           amount={tip.amount}
-          network={process.env['SOLANA_CLUSTER'] ?? 'devnet'}
+          network={process.env['AVAX_NETWORK'] ?? 'fuji'}
           state={tip.status}
           signature={tip.signature}
           explorerUrl={
             tip.signature
-              ? `https://explorer.solana.com/tx/${tip.signature}?cluster=devnet`
+              ? `https://${process.env['AVAX_NETWORK'] === 'mainnet' ? '' : 'testnet.'}snowtrace.io/tx/${tip.signature}`
               : undefined
           }
           errorMessage={tip.errorMessage}

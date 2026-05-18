@@ -9,13 +9,13 @@ export interface LobbySession {
   streamerName?: string;
   description?: string;
   tool?: string;
-  tipSol?: number;
+  tipAvax?: number;
 }
 
 const KEY_PREFIX = 'lobby:session:';
 const INDEX_KEY = 'lobby:index';
 const TTL_SECONDS = 3600;
-const LAMPORTS_PER_SOL = 1_000_000_000;
+const WEI_PER_AVAX = 10n ** 18n;
 
 export class LobbyState {
   constructor(private redis: Redis) {}
@@ -79,15 +79,15 @@ export class LobbyState {
   }
 
   /**
-   * Adds a tip in lamports and updates the session's running total in SOL.
-   * Returns the new SOL total, or null if the session was not found.
+   * Adds a tip in wei and updates the session's running total in AVAX.
+   * Returns the new AVAX total, or null if the session was not found.
    */
-  async addTipLamports(id: string, lamports: number): Promise<number | null> {
+  async addTipWei(id: string, wei: bigint): Promise<number | null> {
     let newTotal: number | null = null;
     await this.updateSession(id, (s) => {
-      const current = s.tipSol ?? 0;
-      newTotal = current + lamports / LAMPORTS_PER_SOL;
-      s.tipSol = newTotal;
+      const current = s.tipAvax ?? 0;
+      newTotal = current + Number(wei) / Number(WEI_PER_AVAX);
+      s.tipAvax = newTotal;
       return s;
     });
     return newTotal;

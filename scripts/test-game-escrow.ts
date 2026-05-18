@@ -1,77 +1,81 @@
 #!/usr/bin/env node
-// Devnet game escrow flow: create -> join -> settle
-// Two wallets required. If only one keypair is available, two ephemeral keypairs
-// are generated and funded via airdrop.
+// Smoke test: create a game room, join with another player, settle to host.
+//
+// Env required:
+//   HAN_CONTRACT_ADDRESS  0x...
+//   AUTHORITY_PRIVATE_KEY 0x... (hub authority key with settle permission)
+//   HOST_WALLET_PATH      path to host wallet.json
+//   PLAYER_WALLET_PATH    path to second player wallet.json
+//   AVAX_RPC_URL          optional
+//
+// Usage: pnpm escrow
 
-import 'dotenv/config';
-import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { loadLocalKeypair } from '../sdk/src/wallet/local-keypair.js';
-import { HanClient } from '../sdk/src/client.js';
 import {
-  createGameRoom,
-  joinGame,
-  settleGame,
-  getRoomState,
-} from '../sdk/src/escrow.js';
+  createPublicClient,
+  createWalletClient,
+  fallback,
+  getAddress,
+  http,
+  parseEther,
+  stringToHex,
+  type Address,
+} from 'viem';
+import { avalancheFuji } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
+import { hanAbi, loadLocalAccount } from '@han/sdk/dist/index.js';
 
-async function airdrop(conn: Connection, kp: Keypair, sol: number): Promise<void> {
-  const sig = await conn.requestAirdrop(kp.publicKey, sol * LAMPORTS_PER_SOL);
-  await conn.confirmTransaction(sig, 'confirmed');
-  console.log(`Airdropped ${sol} SOL to ${kp.publicKey.toBase58()}`);
+const ROOM_ID = BigInt(Date.now());
+const ENTRY_FEE = parseEther('0.001');
+
+async function main() {
+  const han = getAddress(process.env['HAN_CONTRACT_ADDRESS']!) as Address;
+  const authority = privateKeyToAccount(process.env['AUTHORITY_PRIVATE_KEY']! as `0x${string}`);
+  const host = loadLocalAccount(process.env['HOST_WALLET_PATH']);
+  const player = loadLocalAccount(process.env['PLAYER_WALLET_PATH']);
+
+  const transport = fallback(
+    [http(process.env['AVAX_RPC_URL'] ?? 'https://api.avax-test.network/ext/bc/C/rpc')],
+    { rank: false },
+  );
+  const publicClient = createPublicClient({ chain: avalancheFuji, transport });
+  const hostWallet = createWalletClient({ account: host, chain: avalancheFuji, transport });
+  const playerWallet = createWalletClient({ account: player, chain: avalancheFuji, transport });
+  const authorityWallet = createWalletClient({ account: authority, chain: avalancheFuji, transport });
+
+  console.log(`room ${ROOM_ID}, entry ${ENTRY_FEE} wei`);
+
+  const createHash = await hostWallet.writeContract({
+    address: han,
+    abi: hanAbi,
+    functionName: 'createGameRoom',
+    args: [ROOM_ID, stringToHex('pong', { size: 32 }), ENTRY_FEE, 2],
+    value: ENTRY_FEE,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: createHash });
+  console.log(`create ${createHash}`);
+
+  const joinHash = await playerWallet.writeContract({
+    address: han,
+    abi: hanAbi,
+    functionName: 'joinGame',
+    args: [ROOM_ID],
+    value: ENTRY_FEE,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: joinHash });
+  console.log(`join   ${joinHash}`);
+
+  const settleHash = await authorityWallet.writeContract({
+    address: han,
+    abi: hanAbi,
+    functionName: 'settleGame',
+    args: [ROOM_ID, host.address],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: settleHash });
+  console.log(`settle ${settleHash}`);
+  console.log(`explorer https://testnet.snowtrace.io/tx/${settleHash}`);
 }
 
-async function main(): Promise<void> {
-  const rpcUrl = process.env['SOLANA_RPC_URL'] ?? 'https://api.devnet.solana.com';
-  const conn = new Connection(rpcUrl, 'confirmed');
-
-  // Use local keypair as host, generate a fresh player keypair
-  let host: Keypair;
-  try {
-    host = loadLocalKeypair();
-  } catch {
-    host = Keypair.generate();
-    await airdrop(conn, host, 1);
-  }
-
-  const player = Keypair.generate();
-  await airdrop(conn, player, 1);
-
-  const roomId = BigInt(Date.now()); // unique room ID from timestamp
-  const entryFee = BigInt(10_000); // 0.00001 SOL
-
-  console.log('\n--- create_game_room ---');
-  const hostClient = new HanClient({ connection: conn, wallet: host });
-  const createResult = await createGameRoom(hostClient, {
-    roomId,
-    gameType: 'pong',
-    entryFee,
-    maxPlayers: 2,
-  });
-  console.log('create TX:', createResult.signature);
-
-  let room = await getRoomState(hostClient, roomId);
-  console.log('Room status after create:', room?.status); // should be 1 (Filling)
-
-  console.log('\n--- join_game ---');
-  const playerClient = new HanClient({ connection: conn, wallet: player });
-  const joinResult = await joinGame(playerClient, { roomId });
-  console.log('join TX:', joinResult.signature);
-
-  room = await getRoomState(hostClient, roomId);
-  console.log('Room status after join:', room?.status); // should be 2 (Ready)
-
-  console.log('\n--- settle_game ---');
-  // Only config authority can settle. Hub authority keypair needed.
-  // Using host as authority here only works if host === config authority.
-  const settleResult = await settleGame(hostClient, {
-    roomId,
-    winner: player.publicKey,
-  });
-  console.log('settle TX:', settleResult.signature);
-
-  room = await getRoomState(hostClient, roomId);
-  console.log('Room status after settle:', room?.status); // should be 5 (Settled)
-  console.log('Winner:', room?.winner);
-}
-
-main().catch(console.error);
+main().catch((err) => {
+  console.error('test-game-escrow failed:', err);
+  process.exit(1);
+});

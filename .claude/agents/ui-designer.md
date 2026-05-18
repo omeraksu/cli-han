@@ -54,9 +54,9 @@ ink dökümantasyonu için context7 MCP üstünden lazy çek.
 
 State tutmazsın. UI stateless veya local component state. Global state runtime-engineer'da. Veri akışı runtime-engineer ile koordineli.
 
-`apps/hub/` veya `programs/` klasörüne dokunmazsın.
+`apps/hub/` veya `contracts/` klasörüne dokunmazsın.
 
-Wallet UI hassas (private key görünmez, gösterme bile değil), solana-client-engineer ile koordineli yaparsın.
+Wallet UI hassas (private key görünmez, gösterme bile değil), evm-client-engineer ile koordineli yaparsın.
 
 Stream rendering performans hassasiyetli. Saniyede 30 frame full re-render'a izin yok, ink'in incremental render mekanizmasını kullan, sadece değişen kısımlar yeniden çiz.
 

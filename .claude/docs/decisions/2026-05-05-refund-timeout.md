@@ -10,14 +10,14 @@ Han'ın game escrow sistemi şu an iki refund yolu sunuyor:
 Validation raporu (2026-05-05) kritik bir riski işaret etti: **hub authority tek nokta hatası.** `settle_game` instruction'ını sadece hub keypair imzalayabiliyor. Eğer hub çökerse, host iptal etmezse, oyuncuların ulaşamadığı bir vault kalır. Fonlar sonsuza kilitli.
 
 Senaryolar:
-- Hub keypair kayboldu (mainnet'te ciddi, devnet'te demo blocker)
+- Hub keypair kayboldu (mainnet'te ciddi, Fuji testnet'te demo blocker)
 - Hub backend down, oyun bitti ama settle instruction gönderilemedi
 - Host wallet kaybetti, cancel_game çağıramıyor
 - Oyun başladı ama bir oyuncu disconnect, oyun ne settle ne cancel oldu
 
 ## Decision
 
-**Anchor program'a `timeout_refund` instruction eklenecek. V1'e girer, opsiyonel değil.**
+**Solidity contract'a `timeout_refund` instruction eklenecek. V1'e girer, opsiyonel değil.**
 
 Kuralı şu:
 - GameRoom state'inde `created_at: i64` alanı zaten var
@@ -103,7 +103,7 @@ pub const ROOM_TIMEOUT_SECONDS: i64 = 86400; // 24 saat
 - Validation raporu kapatılır, GO sinyali korunur
 
 **Kaybettikleri:**
-- Anchor program'a 1 yeni instruction (~80 satır kod)
+- Solidity contract'a 1 yeni instruction (~80 satır kod)
 - GameRoom account size +1 byte (refund_claimed bitmap)
 - 24 saat çok mu uzun? Demo için sorun değil, oyuncular ortalama 5 dakikada oynar bitirir. Tartışılabilir, V2'de configurable yapılabilir.
 

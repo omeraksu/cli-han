@@ -1,9 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { PublicKey } from '@solana/web3.js';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
+import { getAddress, verifyMessage, type Hex } from 'viem';
+
 import type { HubContext } from '../ws/context.js';
 import { logger } from '../logger.js';
 
@@ -11,18 +10,25 @@ const NONCE_TTL_SECONDS = 60;
 const NONCE_BYTES = 32;
 const WS_TOKEN_BYTES = 32;
 
+const evmAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
+const hexSignature = z.string().regex(/^0x[a-fA-F0-9]+$/).max(200);
+
 function nonceKey(wallet: string, nonceHex: string): string {
-  return `han:nonce:${wallet}:${nonceHex}`;
+  return `han:nonce:${wallet.toLowerCase()}:${nonceHex}`;
+}
+
+function nonceMessage(nonceHex: string): string {
+  return `Han login\nnonce: ${nonceHex}`;
 }
 
 const requestNonceSchema = z.object({
-  wallet: z.string().min(32).max(64),
+  wallet: evmAddress,
 });
 
 const createSessionSchema = z.object({
-  streamerWallet: z.string().min(32).max(64),
+  streamerWallet: evmAddress,
   nonce: z.string().regex(/^[0-9a-f]+$/i).length(NONCE_BYTES * 2),
-  signature: z.string().min(1).max(128),
+  signature: hexSignature,
   streamerName: z.string().min(1).max(32).optional(),
   description: z.string().min(1).max(120).optional(),
   tool: z.string().min(1).max(32).optional(),
@@ -31,17 +37,21 @@ const createSessionSchema = z.object({
 
 function generateSessionId(streamerWallet: string): string {
   const suffix = randomBytes(2).toString('hex');
-  const walletShort = streamerWallet.slice(0, 4).toLowerCase();
+  const walletShort = streamerWallet.slice(2, 6).toLowerCase();
   return `${walletShort}.${suffix}`;
 }
 
-function verifyWalletSignature(wallet: string, nonceHex: string, signatureB58: string): boolean {
+async function verifyWalletSignature(
+  wallet: string,
+  nonceHex: string,
+  signatureHex: string,
+): Promise<boolean> {
   try {
-    const pubkey = new PublicKey(wallet);
-    const nonceBytes = Buffer.from(nonceHex, 'hex');
-    const sigBytes = bs58.decode(signatureB58);
-    if (sigBytes.length !== nacl.sign.signatureLength) return false;
-    return nacl.sign.detached.verify(nonceBytes, sigBytes, pubkey.toBytes());
+    return await verifyMessage({
+      address: getAddress(wallet),
+      message: nonceMessage(nonceHex),
+      signature: signatureHex as Hex,
+    });
   } catch (err) {
     logger.debug({ err }, 'signature verification threw');
     return false;
@@ -49,36 +59,31 @@ function verifyWalletSignature(wallet: string, nonceHex: string, signatureB58: s
 }
 
 export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Promise<void> {
-  // POST /sessions/nonce — issue a one-shot nonce for a wallet to sign
   app.post('/sessions/nonce', async (request, reply) => {
     const parsed = requestNonceSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'invalid body', details: parsed.error.issues });
     }
-    try {
-      new PublicKey(parsed.data.wallet);
-    } catch {
-      return reply.status(400).send({ error: 'invalid wallet pubkey' });
-    }
 
+    const wallet = getAddress(parsed.data.wallet);
     const nonceHex = randomBytes(NONCE_BYTES).toString('hex');
-    await ctx.redis.set(nonceKey(parsed.data.wallet, nonceHex), '1', 'EX', NONCE_TTL_SECONDS);
+    await ctx.redis.set(nonceKey(wallet, nonceHex), '1', 'EX', NONCE_TTL_SECONDS);
 
     return reply.status(201).send({
       nonce: nonceHex,
+      message: nonceMessage(nonceHex),
       expiresAt: Date.now() + NONCE_TTL_SECONDS * 1000,
       ttlSeconds: NONCE_TTL_SECONDS,
     });
   });
 
-  // POST /sessions — streamer registers a new live session.
-  // Requires a fresh nonce signed by the streamer wallet.
   app.post('/sessions', async (request, reply) => {
     const parsed = createSessionSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'invalid body', details: parsed.error.issues });
     }
-    const { streamerWallet, nonce, signature, streamerName, description, tool } = parsed.data;
+    const { nonce, signature, streamerName, description, tool } = parsed.data;
+    const streamerWallet = getAddress(parsed.data.streamerWallet);
 
     const key = nonceKey(streamerWallet, nonce);
     const consumed = await ctx.redis.del(key);
@@ -86,7 +91,7 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
       return reply.status(401).send({ error: 'nonce expired or already used' });
     }
 
-    if (!verifyWalletSignature(streamerWallet, nonce, signature)) {
+    if (!(await verifyWalletSignature(streamerWallet, nonce, signature))) {
       return reply.status(401).send({ error: 'invalid signature' });
     }
 
@@ -119,7 +124,6 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
     }
   });
 
-  // GET /sessions — lobby snapshot
   app.get('/sessions', async (_request, reply) => {
     try {
       const sessions = await ctx.lobby.getSnapshot();
@@ -130,7 +134,6 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
     }
   });
 
-  // GET /sessions/:id
   app.get('/sessions/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
@@ -146,7 +149,6 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
     }
   });
 
-  // DELETE /sessions/:id
   app.delete('/sessions/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {

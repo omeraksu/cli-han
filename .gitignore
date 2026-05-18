@@ -1,59 +1,12 @@
-# Dependencies
 node_modules/
-.pnp
-.pnp.js
-
-# Build outputs
 dist/
 build/
-*.js.map
-*.d.ts.map
-
-# Rust / Anchor
-target/
-.anchor/
-
-# Environment
 .env
 .env.local
-.env.*.local
-
-# Secrets
-*.key
-*.pem
-id.json
-*-keypair.json
-keypair-*.json
-
-# Project artifacts (development bootstrap, not part of source)
-files.zip
-files/
-.superstack/
-architecture.md
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Editors
-.vscode/settings.json
-.idea/
-*.swp
-*.swo
-
-# Logs
 *.log
-logs/
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Prisma — migrations should be committed; only the local dev cache is ignored
-# (none for now)
-
-# pnpm
-.pnpm-store/
-
-# Monad port lives in a separate repo, not tracked here
-han-monad/
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+contracts/lib/
+.DS_Store
+target/

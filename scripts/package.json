@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tip": "node --env-file=../.env --experimental-strip-types --no-warnings test-tip.ts"
+    "tip": "node --env-file=../.env --experimental-strip-types --no-warnings test-tip.ts",
+    "escrow": "node --env-file=../.env --experimental-strip-types --no-warnings test-game-escrow.ts"
   },
   "dependencies": {
     "@han/sdk": "workspace:*",
-    "@solana/web3.js": "^1.98.0"
+    "viem": "^2.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"

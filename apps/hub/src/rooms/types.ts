@@ -34,7 +34,7 @@ export interface StreamRoom extends RoomBase {
   streamerWallet: string;
   streamerName?: string;
   tool?: string;
-  tipSol?: number;
+  tipAvax?: number;
   /** Legacy field — equals `id`, kept for backward-compatible clients. */
   code: string;
   startedAt: number;
