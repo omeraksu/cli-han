@@ -79,10 +79,12 @@ Explorer:     https://testnet.snowtrace.io
 Faucet:       https://faucet.avax.network/ (2 AVAX/24h)
               https://core.app/tools/testnet-faucet/
 
-Han contract:        <forge script DeployFuji çıktısı>
-HanTipRouter:        <forge script DeployFuji çıktısı>
-Fee receiver:        <hub admin wallet, ayrı address>
-Hub authority:       <settle yetkisi olan ayrı address>
+Han contract:        0xa92571e8D0415D041468798767298872a60a3503
+HanTipRouter:        0x29290d67012c3495bC5F3b9333FAA332155Ddb58
+Fee receiver:        0xcA0b47469C7C8848423E7FAd2D4aa062f6507700  (V1 demo: deployer ile aynı)
+Hub authority:       0xcA0b47469C7C8848423E7FAd2D4aa062f6507700  (V1 demo: deployer ile aynı)
+Deployer:            0xcA0b47469C7C8848423E7FAd2D4aa062f6507700
+Deployed at:         2026-05-19, block on snowtrace.io/address/0xa92571e8D0415D041468798767298872a60a3503
 
 Sabitler (Han.sol):
 - ROOM_TIMEOUT: 24 hours
