@@ -25,6 +25,7 @@ import { teamsRoutes } from './routes/teams.js';
 import { submissionsRoutes } from './routes/submissions.js';
 import { authSsoRoutes } from './routes/auth-sso.js';
 import { meRoutes } from './routes/me.js';
+import { anchorRoutes } from './routes/anchor.js';
 import { makeHelpSignalHandlers } from './ws/handlers/help-signal.js';
 import { makeMosaicHandlers } from './ws/handlers/mosaic.js';
 import { makeWorkshopHandlers, leaveWorkshop } from './ws/handlers/workshop.js';
@@ -99,6 +100,7 @@ await app.register(async (instance) => {
   await submissionsRoutes(instance, ctx);
   await authSsoRoutes(instance, ctx);
   await meRoutes(instance, ctx);
+  await anchorRoutes(instance, ctx);
 });
 
 // WebSocket endpoint

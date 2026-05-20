@@ -5,5 +5,6 @@ export * from './errors.js';
 export * from './escrow.js';
 export * from './rpc-client.js';
 export * from './tip.js';
+export * from './event-anchor.js';
 export * from './types/game-room.js';
 export * from './wallet/local-account.js';

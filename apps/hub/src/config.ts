@@ -33,6 +33,7 @@ const schema = z.object({
   HAN_CONTRACT_ADDRESS: optionalEvmAddress,
   HAN_TIP_ROUTER_ADDRESS: evmAddress,
   HAN_FEE_RECEIVER_ADDRESS: evmAddress,
+  HAN_EVENT_ANCHOR_ADDRESS: optionalEvmAddress,
 });
 
 export const config = schema.parse(process.env);

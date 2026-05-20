@@ -120,6 +120,26 @@ events
   });
 
 program
+  .command('profile <action>')
+  .description('Profile actions (attest)')
+  .option('--event <slug>', 'Event slug')
+  .option('--role <role>', 'organizer/judge/mentor/instructor/builder/spectator')
+  .action(async (action: string, opts: { event?: string; role?: string }) => {
+    if (action !== 'attest') {
+      console.error(`[profile] bilinmeyen aksiyon: ${action}. Su an sadece 'attest' destekleniyor`);
+      process.exit(1);
+    }
+    if (!opts.event) {
+      console.error('[profile] --event <slug> gerek');
+      process.exit(1);
+    }
+    const role = (opts.role ?? 'builder') as
+      | 'organizer' | 'judge' | 'mentor' | 'instructor' | 'builder' | 'spectator';
+    const { runAttest } = await import('./events/attest.js');
+    await runAttest({ hubUrl: HUB_URL, walletPath: WALLET_PATH, eventSlug: opts.event, role });
+  });
+
+program
   .command('workshop <action> [slug]')
   .description('Workshop modu — Sprint 4 UI ile gelecek')
   .action(async (action: string, slug?: string) => {

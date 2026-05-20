@@ -81,6 +81,7 @@ Faucet:       https://faucet.avax.network/ (2 AVAX/24h)
 
 Han contract:        0xa92571e8D0415D041468798767298872a60a3503
 HanTipRouter:        0x29290d67012c3495bC5F3b9333FAA332155Ddb58
+HanEventAnchor:      0x2cD1B822Db2Bc6F44D612D86075f804Ab61ac112  (Sprint 6, 2026-05-20)
 Fee receiver:        0xcA0b47469C7C8848423E7FAd2D4aa062f6507700  (V1 demo: deployer ile aynı)
 Hub authority:       0xcA0b47469C7C8848423E7FAd2D4aa062f6507700  (V1 demo: deployer ile aynı)
 Deployer:            0xcA0b47469C7C8848423E7FAd2D4aa062f6507700
