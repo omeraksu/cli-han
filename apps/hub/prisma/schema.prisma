@@ -43,11 +43,19 @@ model Room {
 }
 
 model Profile {
-  wallet    String   @id @db.VarChar(42)
-  handle    String   @unique @db.VarChar(32)
-  bio       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  wallet       String   @id @db.VarChar(42)
+  handle       String   @unique @db.VarChar(32)
+  bio          String?
+  // Sprint 2 — organizer/judge web dashboard login. Builder still wallet-only.
+  email        String?  @unique @db.VarChar(128)
+  ssoProvider  String?  @db.VarChar(16)
+  ssoSubject   String?  @db.VarChar(128)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  eventMembers  EventMember[]
+  teamMembers   TeamMember[]
+  attestations  BuilderAttestation[]
+  @@unique([ssoProvider, ssoSubject])
   @@map("profiles")
 }
 
@@ -94,13 +102,66 @@ model Event {
   sessions        Session[]
   submissions     Submission[]
   reports         CorpusReport[]
+  members         EventMember[]
+  teams           Team[]
+  helpSignals     HelpSignal[]
+  attestations    BuilderAttestation[]
   @@map("events")
+}
+
+// Sprint 2 — event-scoped role binding. role enum stored as VarChar for now
+// (organizer/judge/mentor/instructor/builder/spectator).
+model EventMember {
+  id          String   @id @default(uuid()) @db.Uuid
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String   @db.Uuid
+  profile     Profile  @relation(fields: [wallet], references: [wallet])
+  wallet      String   @db.VarChar(42)
+  role        String   @db.VarChar(16)
+  invitedBy   String?  @db.VarChar(42)
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@unique([eventId, wallet])
+  @@index([eventId])
+  @@map("event_members")
+}
+
+model Team {
+  id          String       @id @default(uuid()) @db.Uuid
+  event       Event        @relation(fields: [eventId], references: [id])
+  eventId     String       @db.Uuid
+  slug        String       @db.VarChar(64)
+  name        String       @db.VarChar(128)
+  status      String       @default("active") @db.VarChar(16)
+  createdAt   DateTime     @default(now())
+  members     TeamMember[]
+  submissions Submission[]
+  helpSignals HelpSignal[]
+  @@unique([eventId, slug])
+  @@index([eventId])
+  @@map("teams")
+}
+
+model TeamMember {
+  id          String   @id @default(uuid()) @db.Uuid
+  team        Team     @relation(fields: [teamId], references: [id])
+  teamId      String   @db.Uuid
+  profile     Profile  @relation(fields: [wallet], references: [wallet])
+  wallet      String   @db.VarChar(42)
+  role        String   @default("member") @db.VarChar(16)
+  createdAt   DateTime @default(now())
+  @@unique([teamId, wallet])
+  @@index([teamId])
+  @@map("team_members")
 }
 
 model Submission {
   id            String   @id @default(uuid()) @db.Uuid
   event         Event    @relation(fields: [eventId], references: [id])
   eventId       String   @db.Uuid
+  team          Team?    @relation(fields: [teamId], references: [id])
+  teamId        String?  @db.Uuid
+  // teamLabel persists for B2C / pre-team-table corpus events (Sprint 1 path).
   teamLabel     String   @db.VarChar(64)
   title         String   @db.VarChar(128)
   summary       String?
@@ -109,7 +170,41 @@ model Submission {
   anchorTxHash  String?  @db.VarChar(66)
   submittedAt   DateTime @default(now())
   @@index([eventId])
+  @@index([teamId])
   @@map("submissions")
+}
+
+model HelpSignal {
+  id          String    @id @default(uuid()) @db.Uuid
+  event       Event     @relation(fields: [eventId], references: [id])
+  eventId     String    @db.Uuid
+  team        Team?     @relation(fields: [teamId], references: [id])
+  teamId      String?   @db.Uuid
+  // sessionId is the Session.id of the builder asking for help.
+  sessionId   String    @db.VarChar(64)
+  reason      String?
+  openedAt    DateTime  @default(now())
+  closedAt    DateTime?
+  resolvedBy  String?   @db.VarChar(42)
+  @@index([eventId])
+  @@index([teamId])
+  @@map("help_signals")
+}
+
+// Sprint 6 will wire this to HanEventAnchor.sol. For now anchorTxHash stays
+// null and rows are written from the WS attestation handler.
+model BuilderAttestation {
+  id           String   @id @default(uuid()) @db.Uuid
+  event        Event    @relation(fields: [eventId], references: [id])
+  eventId      String   @db.Uuid
+  profile      Profile  @relation(fields: [wallet], references: [wallet])
+  wallet       String   @db.VarChar(42)
+  role         String   @db.VarChar(16)
+  anchorTxHash String?  @db.VarChar(66)
+  attestedAt   DateTime @default(now())
+  @@unique([eventId, wallet])
+  @@index([eventId])
+  @@map("builder_attestations")
 }
 
 model CorpusReport {

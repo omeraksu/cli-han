@@ -20,6 +20,11 @@ import { tipsRoutes } from './routes/tips.js';
 import { configRoutes } from './routes/config.js';
 import { roomsRoutes } from './routes/rooms.js';
 import { corpusRoutes } from './routes/corpus.js';
+import { eventsRoutes } from './routes/events.js';
+import { teamsRoutes } from './routes/teams.js';
+import { submissionsRoutes } from './routes/submissions.js';
+import { authSsoRoutes } from './routes/auth-sso.js';
+import { makeHelpSignalHandlers } from './ws/handlers/help-signal.js';
 import type { HubContext } from './ws/context.js';
 
 // shared services
@@ -51,6 +56,7 @@ await seedChannels(rooms);
 const wsRouter = new WsRouter();
 const { handleRegisterStreamer, handleStreamChunk, handleStreamEnd } = makeStreamerHandlers(ctx);
 const { handleJoin, handleSwitchMode, handleChatSend } = makeViewerHandlers(ctx);
+const { handleHelpSignalOpen, handleHelpSignalClose } = makeHelpSignalHandlers(ctx);
 
 wsRouter.on('register_streamer', handleRegisterStreamer);
 wsRouter.on('stream_chunk', handleStreamChunk);
@@ -58,6 +64,8 @@ wsRouter.on('stream_end', handleStreamEnd);
 wsRouter.on('join', handleJoin);
 wsRouter.on('switch_mode', handleSwitchMode);
 wsRouter.on('chat_send', handleChatSend);
+wsRouter.on('help_signal_open', handleHelpSignalOpen);
+wsRouter.on('help_signal_close', handleHelpSignalClose);
 
 // Fastify
 const app = Fastify({ logger: false });
@@ -74,6 +82,10 @@ await app.register(async (instance) => {
   await configRoutes(instance);
   await roomsRoutes(instance, ctx);
   await corpusRoutes(instance, ctx);
+  await eventsRoutes(instance, ctx);
+  await teamsRoutes(instance, ctx);
+  await submissionsRoutes(instance, ctx);
+  await authSsoRoutes(instance, ctx);
 });
 
 // WebSocket endpoint
