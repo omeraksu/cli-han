@@ -19,6 +19,12 @@ model Session {
   tips            Tip[]
   room            Room?         @relation(fields: [roomId], references: [id])
   roomId          String?       @unique @db.VarChar(64)
+  // Sprint 1 (events layer): null for B2C sessions, set for event-attached
+  // streams. teamLabel is a free-form text for V1 (no Team table yet).
+  event           Event?        @relation(fields: [eventId], references: [id])
+  eventId         String?       @db.Uuid
+  teamLabel       String?       @db.VarChar(64)
+  @@index([eventId])
   @@map("sessions")
 }
 
@@ -70,6 +76,53 @@ model Tip {
   createdAt   DateTime @default(now())
   session     Session  @relation(fields: [sessionId], references: [id])
   @@map("tips")
+}
+
+// Sprint 1 — minimum events delta for Build Corpus Report MVP.
+// Full Event/Team/Member/Role/HelpSignal tables land in Sprint 2.
+model Event {
+  id              String       @id @default(uuid()) @db.Uuid
+  slug            String       @unique @db.VarChar(64)
+  title           String       @db.VarChar(128)
+  organizerWallet String       @db.VarChar(42)
+  startsAt        DateTime
+  endsAt          DateTime?
+  status          String       @default("draft") @db.VarChar(16)
+  plan            String       @default("corpus-report") @db.VarChar(32)
+  brand           Json?
+  createdAt       DateTime     @default(now())
+  sessions        Session[]
+  submissions     Submission[]
+  reports         CorpusReport[]
+  @@map("events")
+}
+
+model Submission {
+  id            String   @id @default(uuid()) @db.Uuid
+  event         Event    @relation(fields: [eventId], references: [id])
+  eventId       String   @db.Uuid
+  teamLabel     String   @db.VarChar(64)
+  title         String   @db.VarChar(128)
+  summary       String?
+  repoUrl       String?  @db.VarChar(256)
+  demoUrl       String?  @db.VarChar(256)
+  anchorTxHash  String?  @db.VarChar(66)
+  submittedAt   DateTime @default(now())
+  @@index([eventId])
+  @@map("submissions")
+}
+
+model CorpusReport {
+  id          String   @id @default(uuid()) @db.Uuid
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String   @db.Uuid
+  status      String   @default("queued") @db.VarChar(16)
+  frictionMap Json?
+  pdfPath     String?  @db.VarChar(256)
+  generatedAt DateTime?
+  createdAt   DateTime @default(now())
+  @@index([eventId])
+  @@map("corpus_reports")
 }
 
 model GameResult {

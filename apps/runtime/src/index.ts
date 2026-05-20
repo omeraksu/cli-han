@@ -35,7 +35,9 @@ function ensureWalletOrExit(path?: string) {
 program
   .command('stream [command]')
   .description('AI tool session yayinla')
-  .action(async (command?: string) => {
+  .option('--event <slug>', 'Event slug — bu yayini bir event corpus\'una bagla')
+  .option('--team <label>', 'Event icinde takim etiketi (orn. team-fener)')
+  .action(async (command: string | undefined, opts: { event?: string; team?: string }) => {
     const { startStreamer } = await import('./streamer/index.js');
     const account = ensureWalletOrExit(WALLET_PATH);
     await startStreamer({
@@ -44,6 +46,8 @@ program
       command,
       streamerName: HANDLE,
       description: DESCRIPTION,
+      eventSlug: opts.event ?? process.env['HAN_EVENT'],
+      teamLabel: opts.team ?? process.env['HAN_TEAM'],
     });
   });
 

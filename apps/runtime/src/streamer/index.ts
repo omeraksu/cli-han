@@ -20,6 +20,10 @@ export interface StreamerOptions {
   command?: string;
   streamerName?: string;
   description?: string;
+  /** Optional event slug — opts this stream into a corpus event. */
+  eventSlug?: string;
+  /** Optional team label inside the event. */
+  teamLabel?: string;
 }
 
 function detectTool(command: string | undefined): string {
@@ -98,6 +102,8 @@ export async function startStreamer(opts: StreamerOptions): Promise<void> {
     const body: CreateSessionRequest = {
       streamerWallet: walletAddress,
       nonce,
+      eventSlug: opts.eventSlug,
+      teamLabel: opts.teamLabel,
       signature,
       streamerName,
       description,

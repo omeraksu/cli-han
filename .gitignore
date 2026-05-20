@@ -10,3 +10,5 @@ contracts/broadcast/
 contracts/lib/
 .DS_Store
 target/
+apps/hub/corpus-reports/
+

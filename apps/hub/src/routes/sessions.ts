@@ -33,6 +33,8 @@ const createSessionSchema = z.object({
   description: z.string().min(1).max(120).optional(),
   tool: z.string().min(1).max(32).optional(),
   id: z.string().min(3).max(64).optional(),
+  eventSlug: z.string().regex(/^[a-z0-9-]{3,64}$/).optional(),
+  teamLabel: z.string().min(1).max(64).optional(),
 });
 
 function generateSessionId(streamerWallet: string): string {
@@ -82,7 +84,7 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
     if (!parsed.success) {
       return reply.status(400).send({ error: 'invalid body', details: parsed.error.issues });
     }
-    const { nonce, signature, streamerName, description, tool } = parsed.data;
+    const { nonce, signature, streamerName, description, tool, eventSlug, teamLabel } = parsed.data;
     const streamerWallet = getAddress(parsed.data.streamerWallet);
 
     const key = nonceKey(streamerWallet, nonce);
@@ -98,6 +100,15 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
     const id = parsed.data.id ?? generateSessionId(streamerWallet);
     const wsToken = randomBytes(WS_TOKEN_BYTES).toString('hex');
 
+    let eventId: string | null = null;
+    if (eventSlug) {
+      const event = await ctx.db.event.findUnique({ where: { slug: eventSlug } });
+      if (!event) {
+        return reply.status(404).send({ error: `event ${eventSlug} not found` });
+      }
+      eventId = event.id;
+    }
+
     try {
       const session = await ctx.db.session.create({
         data: {
@@ -105,10 +116,12 @@ export async function sessionsRoutes(app: FastifyInstance, ctx: HubContext): Pro
           streamerWallet,
           wsToken,
           startedAt: new Date(),
+          eventId,
+          teamLabel: teamLabel ?? null,
         },
       });
 
-      logger.info({ sessionId: id, streamerWallet, tool }, 'session reserved');
+      logger.info({ sessionId: id, streamerWallet, tool, eventSlug, teamLabel }, 'session reserved');
       return reply.status(201).send({
         sessionId: id,
         code: id,

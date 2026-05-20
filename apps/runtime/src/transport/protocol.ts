@@ -25,6 +25,10 @@ export interface CreateSessionRequest {
   description?: string;
   tool?: string;
   id?: string;
+  /** Optional event slug — attaches this session to a corpus event. */
+  eventSlug?: string;
+  /** Optional team label inside the event (free-form for MVP). */
+  teamLabel?: string;
 }
 
 export interface CreateSessionResponse {

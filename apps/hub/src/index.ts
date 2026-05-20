@@ -19,6 +19,7 @@ import { sessionsRoutes } from './routes/sessions.js';
 import { tipsRoutes } from './routes/tips.js';
 import { configRoutes } from './routes/config.js';
 import { roomsRoutes } from './routes/rooms.js';
+import { corpusRoutes } from './routes/corpus.js';
 import type { HubContext } from './ws/context.js';
 
 // shared services
@@ -72,6 +73,7 @@ await app.register(async (instance) => {
   await tipsRoutes(instance, ctx);
   await configRoutes(instance);
   await roomsRoutes(instance, ctx);
+  await corpusRoutes(instance, ctx);
 });
 
 // WebSocket endpoint
@@ -104,7 +106,9 @@ app.get('/ws', { websocket: true }, (socket, _req) => {
         rooms.closeRoom(roomId).catch((closeErr: unknown) => {
           logger.error({ err: closeErr, roomId }, 'close room failed');
         });
-        cacheMap.delete(roomId);
+        // Cache retained for corpus analyzer — TTL inside StreamCache will
+        // evict stale events on its own (5 min maxAge). Sprint 8 will move
+        // this to persistent storage (S3/R2) and drop the in-memory hold.
         const fan = fanoutMap.get(roomId);
         if (fan) {
           for (const viewerId of fan.viewerIds()) {
