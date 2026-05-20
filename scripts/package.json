@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "tip": "node --env-file=../.env --experimental-strip-types --no-warnings test-tip.ts",
-    "escrow": "node --env-file=../.env --experimental-strip-types --no-warnings test-game-escrow.ts"
+    "escrow": "node --env-file=../.env --experimental-strip-types --no-warnings test-game-escrow.ts",
+    "mosaic": "node --experimental-strip-types --no-warnings test-mosaic.ts"
   },
   "dependencies": {
     "@han/sdk": "workspace:*",
-    "viem": "^2.21.0"
+    "viem": "^2.21.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13"
   }
 }

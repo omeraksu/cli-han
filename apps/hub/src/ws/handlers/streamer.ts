@@ -3,6 +3,7 @@ import type { Connection } from '../gateway.js';
 import type { HubContext } from '../context.js';
 import { StreamCache } from '../../stream/cache.js';
 import { StreamFanout } from '../../stream/fanout.js';
+import { broadcastTileUpdate } from '../../mosaic/state.js';
 import { logger } from '../../logger.js';
 
 const registerStreamerSchema = z.object({
@@ -160,6 +161,33 @@ export function makeStreamerHandlers(ctx: HubContext) {
 
     const fanout = ctx.fanout.get(sessionId);
     if (fanout) fanout.broadcast(event);
+
+    // Mosaic fanout: if this session is event-attached, ping the judges.
+    // We hit the DB once per chunk; Sprint 8 will cache (eventId, teamLabel)
+    // on the conn so the lookup goes away.
+    const sessionRow = await ctx.db.session.findUnique({
+      where: { id: sessionId },
+      select: { eventId: true, teamLabel: true, streamerWallet: true },
+    });
+    if (sessionRow?.eventId) {
+      const snippet =
+        event.type === 'stdout'
+          ? event.data.slice(-120).replace(/\s+/g, ' ').trim()
+          : event.type === 'command_start'
+            ? `$ ${event.command.slice(0, 80)}`
+            : event.type === 'tool_call'
+              ? `[tool] ${event.name}`
+              : undefined;
+      broadcastTileUpdate(ctx.gateway, ctx.mosaic, {
+        type: 'mosaic_tile_update',
+        eventId: sessionRow.eventId,
+        sessionId,
+        teamLabel: sessionRow.teamLabel ?? sessionId,
+        streamerWallet: sessionRow.streamerWallet,
+        lastActivity: event.ts,
+        lastSnippet: snippet,
+      });
+    }
   }
 
   async function handleStreamEnd(conn: Connection, _payload: unknown): Promise<void> {

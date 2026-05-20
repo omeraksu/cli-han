@@ -26,6 +26,9 @@ import { submissionsRoutes } from './routes/submissions.js';
 import { authSsoRoutes } from './routes/auth-sso.js';
 import { meRoutes } from './routes/me.js';
 import { makeHelpSignalHandlers } from './ws/handlers/help-signal.js';
+import { makeMosaicHandlers } from './ws/handlers/mosaic.js';
+import { makeWorkshopHandlers, leaveWorkshop } from './ws/handlers/workshop.js';
+import { MosaicSubscribers } from './mosaic/state.js';
 import type { HubContext } from './ws/context.js';
 
 // shared services
@@ -38,6 +41,7 @@ const gateway = new WsGateway();
 const chat = new ChatBroker(redis);
 const cacheMap = new Map<string, StreamCache>();
 const fanoutMap = new Map<string, StreamFanout>();
+const mosaic = new MosaicSubscribers();
 
 const ctx: HubContext = {
   lobby,
@@ -48,6 +52,7 @@ const ctx: HubContext = {
   chat,
   db,
   redis,
+  mosaic,
 };
 
 // Seed persistent channels on boot. Idempotent — won't overwrite live state.
@@ -58,6 +63,8 @@ const wsRouter = new WsRouter();
 const { handleRegisterStreamer, handleStreamChunk, handleStreamEnd } = makeStreamerHandlers(ctx);
 const { handleJoin, handleSwitchMode, handleChatSend } = makeViewerHandlers(ctx);
 const { handleHelpSignalOpen, handleHelpSignalClose } = makeHelpSignalHandlers(ctx);
+const { handleSubscribe: handleMosaicSubscribe, handleUnsubscribe: handleMosaicUnsubscribe } = makeMosaicHandlers(ctx);
+const { handleWorkshopJoin, handleWorkshopCursor } = makeWorkshopHandlers(ctx);
 
 wsRouter.on('register_streamer', handleRegisterStreamer);
 wsRouter.on('stream_chunk', handleStreamChunk);
@@ -67,6 +74,10 @@ wsRouter.on('switch_mode', handleSwitchMode);
 wsRouter.on('chat_send', handleChatSend);
 wsRouter.on('help_signal_open', handleHelpSignalOpen);
 wsRouter.on('help_signal_close', handleHelpSignalClose);
+wsRouter.on('mosaic_subscribe', handleMosaicSubscribe);
+wsRouter.on('mosaic_unsubscribe', handleMosaicUnsubscribe);
+wsRouter.on('workshop_join', handleWorkshopJoin);
+wsRouter.on('workshop_cursor', handleWorkshopCursor);
 
 // Fastify
 const app = Fastify({ logger: false });
@@ -109,6 +120,11 @@ app.get('/ws', { websocket: true }, (socket, _req) => {
   });
 
   socket.on('close', () => {
+    // Sprint 4: mosaic + workshop bookkeeping always runs, regardless of
+    // whether this conn ever joined a room.
+    mosaic.unsubscribe(connId);
+    leaveWorkshop(connId);
+
     const existing = gateway.get(connId);
     const roomId = existing?.roomId ?? existing?.sessionId;
     if (existing && roomId) {
