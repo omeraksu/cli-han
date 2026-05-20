@@ -11,4 +11,6 @@ contracts/lib/
 .DS_Store
 target/
 apps/hub/corpus-reports/
+apps/web/.next/
+.next/
 
