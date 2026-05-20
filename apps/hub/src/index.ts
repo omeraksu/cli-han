@@ -24,6 +24,7 @@ import { eventsRoutes } from './routes/events.js';
 import { teamsRoutes } from './routes/teams.js';
 import { submissionsRoutes } from './routes/submissions.js';
 import { authSsoRoutes } from './routes/auth-sso.js';
+import { meRoutes } from './routes/me.js';
 import { makeHelpSignalHandlers } from './ws/handlers/help-signal.js';
 import type { HubContext } from './ws/context.js';
 
@@ -86,6 +87,7 @@ await app.register(async (instance) => {
   await teamsRoutes(instance, ctx);
   await submissionsRoutes(instance, ctx);
   await authSsoRoutes(instance, ctx);
+  await meRoutes(instance, ctx);
 });
 
 // WebSocket endpoint

@@ -1,11 +1,31 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
+import { getAddress, verifyMessage, type Hex } from 'viem';
 
 import type { HubContext } from '../ws/context.js';
 import { logger } from '../logger.js';
 
 const evmAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
+const hexSignature = z.string().regex(/^0x[a-fA-F0-9]+$/).max(200);
+
+const NONCE_BYTES = 32;
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+function nonceKey(wallet: string, nonceHex: string): string {
+  return `han:nonce:${wallet.toLowerCase()}:${nonceHex}`;
+}
+
+function nonceMessage(nonceHex: string): string {
+  return `Han login\nnonce: ${nonceHex}`;
+}
+
+const walletLoginSchema = z.object({
+  wallet: evmAddress,
+  nonce: z.string().regex(/^[0-9a-f]+$/i).length(NONCE_BYTES * 2),
+  signature: hexSignature,
+  handle: z.string().regex(/^[a-z0-9_-]{3,32}$/i).optional(),
+});
 
 // Sprint 2 — auth scaffolding only. Real Google + GitHub OAuth callbacks land
 // alongside the Next.js web layer in Sprint 5 (apps/web/api/auth/[provider]).
@@ -94,6 +114,61 @@ export async function authSsoRoutes(app: FastifyInstance, ctx: HubContext): Prom
         email: profile.email,
         ssoProvider: profile.ssoProvider,
       },
+    });
+  });
+
+  // POST /auth/wallet-login — builder/judge wallet handshake.
+  // Reuses the /sessions/nonce endpoint to obtain `nonce`, signs the
+  // canonical message client-side, exchanges for a Bearer token. Same
+  // han:sso:<token> Redis key + 7d TTL the dev-login flow uses, so the
+  // middleware in Sprint 5 has a single auth surface.
+  app.post('/auth/wallet-login', async (req, reply) => {
+    const parsed = walletLoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: 'invalid body', details: parsed.error.flatten() });
+    }
+    const { nonce, signature, handle } = parsed.data;
+    const wallet = getAddress(parsed.data.wallet);
+
+    const key = nonceKey(wallet, nonce);
+    const consumed = await ctx.redis.del(key);
+    if (consumed === 0) {
+      return reply.code(401).send({ error: 'nonce expired or already used' });
+    }
+
+    let ok = false;
+    try {
+      ok = await verifyMessage({
+        address: wallet,
+        message: nonceMessage(nonce),
+        signature: signature as Hex,
+      });
+    } catch (err) {
+      logger.debug({ err }, 'wallet-login: verify threw');
+    }
+    if (!ok) return reply.code(401).send({ error: 'invalid signature' });
+
+    // Upsert minimal Profile if first login. Handle defaults to wallet-shorthand.
+    const seedHandle = handle ?? `builder-${wallet.slice(2, 8).toLowerCase()}`;
+    const profile = await ctx.db.profile.upsert({
+      where: { wallet },
+      update: { handle: handle ?? undefined },
+      create: { wallet, handle: seedHandle },
+    });
+
+    const token = randomBytes(32).toString('hex');
+    await ctx.redis.set(`han:sso:${token}`, profile.wallet, 'EX', TOKEN_TTL_SECONDS);
+
+    logger.info({ wallet: profile.wallet, walletLogin: true }, 'wallet-login');
+    return reply.send({
+      token,
+      profile: {
+        wallet: profile.wallet,
+        handle: profile.handle,
+        email: profile.email,
+        ssoProvider: profile.ssoProvider,
+      },
+      expiresInSeconds: TOKEN_TTL_SECONDS,
     });
   });
 

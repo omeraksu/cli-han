@@ -92,4 +92,48 @@ program
     });
   });
 
+program
+  .command('login')
+  .description('Cuzdanini imzala, hub bearer token al')
+  .option('--handle <name>', 'Profile handle (yoksa cuzdan kisaltmasi)')
+  .action(async (opts: { handle?: string }) => {
+    const { runWalletLogin } = await import('./auth/login.js');
+    await runWalletLogin({ hubUrl: HUB_URL, walletPath: WALLET_PATH, handle: opts.handle ?? HANDLE });
+  });
+
+const events = program.command('events').description('Event komutlari (organizer/judge/builder)');
+
+events
+  .command('list')
+  .description('Uye oldugun event\'leri listele')
+  .action(async () => {
+    const { runEventsList } = await import('./events/commands.js');
+    await runEventsList({ hubUrl: HUB_URL });
+  });
+
+events
+  .command('join <slug>')
+  .description('Pending bir event davetini kabul et')
+  .action(async (slug: string) => {
+    const { runEventsJoin } = await import('./events/commands.js');
+    await runEventsJoin({ hubUrl: HUB_URL, slug });
+  });
+
+program
+  .command('workshop <action> [slug]')
+  .description('Workshop modu — Sprint 4 UI ile gelecek')
+  .action(async (action: string, slug?: string) => {
+    const { runWorkshopStub } = await import('./events/commands.js');
+    await runWorkshopStub({ hubUrl: HUB_URL, action, slug });
+  });
+
+program
+  .command('watch')
+  .description('Judge mosaic — Sprint 4 UI ile gelecek')
+  .option('--event <slug>', 'Event slug')
+  .action(async (opts: { event?: string }) => {
+    const { runWatchStub } = await import('./events/commands.js');
+    await runWatchStub({ hubUrl: HUB_URL, eventSlug: opts.event });
+  });
+
 program.parse();
