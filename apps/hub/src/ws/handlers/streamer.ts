@@ -162,5 +162,26 @@ export function makeStreamerHandlers(ctx: HubContext) {
     if (fanout) fanout.broadcast(event);
   }
 
-  return { handleRegisterStreamer, handleStreamChunk };
+  async function handleStreamEnd(conn: Connection, _payload: unknown): Promise<void> {
+    const sessionId = conn.sessionId;
+    if (!sessionId) {
+      conn.ws.send(JSON.stringify({ type: 'error', message: 'not registered' }));
+      return;
+    }
+    // Eagerly mark the session ended. The socket close path is the
+    // fallback that runs cleanup if the client disconnects without
+    // sending stream_end — both paths are idempotent.
+    try {
+      await ctx.db.session.update({
+        where: { id: sessionId },
+        data: { endedAt: new Date() },
+      });
+    } catch (err) {
+      logger.error({ err, sessionId }, 'stream_end: db mark failed');
+    }
+    logger.info({ sessionId }, 'stream_end received');
+    conn.ws.send(JSON.stringify({ type: 'stream_end_ack', sessionId }));
+  }
+
+  return { handleRegisterStreamer, handleStreamChunk, handleStreamEnd };
 }

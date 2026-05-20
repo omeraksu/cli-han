@@ -48,11 +48,12 @@ await seedChannels(rooms);
 
 // WS router
 const wsRouter = new WsRouter();
-const { handleRegisterStreamer, handleStreamChunk } = makeStreamerHandlers(ctx);
+const { handleRegisterStreamer, handleStreamChunk, handleStreamEnd } = makeStreamerHandlers(ctx);
 const { handleJoin, handleSwitchMode, handleChatSend } = makeViewerHandlers(ctx);
 
 wsRouter.on('register_streamer', handleRegisterStreamer);
 wsRouter.on('stream_chunk', handleStreamChunk);
+wsRouter.on('stream_end', handleStreamEnd);
 wsRouter.on('join', handleJoin);
 wsRouter.on('switch_mode', handleSwitchMode);
 wsRouter.on('chat_send', handleChatSend);
