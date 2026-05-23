@@ -13,4 +13,5 @@ target/
 apps/hub/corpus-reports/
 apps/web/.next/
 .next/
+.superstack/
 
